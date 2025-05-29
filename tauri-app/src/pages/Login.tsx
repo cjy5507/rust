@@ -11,6 +11,22 @@ interface LoginProps {
   onLogin: () => void;
 }
 
+// 네이버 표준시 fetch 함수 추가
+async function fetchNaverTime(): Promise<string | null> {
+  try {
+    const res = await fetch('https://time.navyism.com/?host=naver.com');
+    const html = await res.text();
+    const match = html.match(/<span id="time_area">([0-9\- :]+)<\/span>/);
+    if (match && match[1]) {
+      // '2024-06-13 15:23:45' → ISO 문자열로 변환
+      return match[1].replace(' ', 'T');
+    }
+  } catch (e) {
+    console.error('네이버 시간 동기화 실패', e);
+  }
+  return null;
+}
+
 const Login = ({ onLogin }: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,7 +37,17 @@ const Login = ({ onLogin }: LoginProps) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      const naverTime = await fetchNaverTime();
+      const data = await login(email, password, naverTime);
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        if (data.email) localStorage.setItem('email', data.email);
+        if (data.username) localStorage.setItem('username', data.username);
+        if (data.role) localStorage.setItem('role', data.role);
+        if (naverTime) {
+          localStorage.setItem('naverTime', naverTime ? naverTime : '');
+        }
+      }
       onLogin();
       navigate('/dashboard');
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import './MainLayout.css';
 
@@ -19,6 +19,24 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [clock, setClock] = useState<string>("");
+
+  useEffect(() => {
+    let baseTime: Date;
+    const naverTimeStr = localStorage.getItem('naverTime');
+    if (naverTimeStr && naverTimeStr.trim() !== '') {
+      baseTime = new Date(naverTimeStr);
+    } else {
+      baseTime = new Date();
+    }
+    let current = baseTime.getTime();
+    setClock(new Date(current).toLocaleString('ko-KR', { hour12: false }));
+    const timer = setInterval(() => {
+      current += 1000;
+      setClock(new Date(current).toLocaleString('ko-KR', { hour12: false }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: '#101315', fontFamily }}>
@@ -30,9 +48,12 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
         <span className="appbar-title">
           ROLEX 예약 시스템
         </span>
-        <button type="button" className="logout-btn" onClick={onLogout}>
-          로그아웃
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ color: '#FFD700', fontWeight: 700, marginRight: 24, fontSize: 18 }}>{clock}</span>
+          <button type="button" className="logout-btn" onClick={onLogout}>
+            로그아웃
+          </button>
+        </div>
       </div>
       {/* Drawer 메뉴 */}
       {drawerOpen && (

@@ -7,12 +7,17 @@ import MainLayout from "./components/layout/MainLayout";
 import "./App.css";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('token');
+  });
 
   // 로그인 성공 시 호출될 콜백
   const handleLogin = () => setIsAuthenticated(true);
   // 로그아웃 시 호출될 콜백
-  const handleLogout = () => setIsAuthenticated(false);
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('token');
+  };
 
   return (
     <BrowserRouter>
