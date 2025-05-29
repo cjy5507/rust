@@ -1,7 +1,7 @@
 import { 
   Card, CardContent, Typography, TextField, Button, Stack, Box, Select, MenuItem, 
   InputLabel, FormControl, CircularProgress, Paper, Chip, ButtonGroup,
-  ToggleButton, ToggleButtonGroup, Slider
+  ToggleButton, ToggleButtonGroup, Slider, Alert
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -17,7 +17,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import WatchIcon from '@mui/icons-material/Watch';
 import { useNavigate } from 'react-router-dom';
 
 const DEFAULT_START_TIME = '10:00';
@@ -25,10 +25,10 @@ const DEFAULT_VISIT_DATE = dayjs();
 const DEFAULT_VISIT_TIME = '10:00';
 
 // 24시간 전체 시간 옵션들 (30분 단위)
-const generateTimeOptions = () => {
+const generateTimeOptions = (minuteInterval = 30) => {
   const times = [];
   for (let hour = 0; hour < 24; hour++) {
-    for (let minute = 0; minute < 60; minute += 30) {
+    for (let minute = 0; minute < 60; minute += minuteInterval) {
       const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
       const displayStr = hour < 12 
         ? `${timeStr} (오전 ${hour === 0 ? 12 : hour}시 ${minute === 0 ? '' : minute + '분'})`
@@ -39,7 +39,11 @@ const generateTimeOptions = () => {
   return times;
 };
 
-const ALL_TIME_OPTIONS = generateTimeOptions();
+// 일반 시간 옵션은 30분 단위
+const ALL_TIME_OPTIONS = generateTimeOptions(30);
+
+// 자동화 시간은 1분 단위로 더 세밀하게 제공
+const AUTOMATION_TIME_OPTIONS = generateTimeOptions(1);
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -69,10 +73,14 @@ const Settings = () => {
         const settingsObj: any = {};
         settingsArr.forEach((s: any) => {
           const storeId = s.store?.id || s.storeId || s.id;
+          // 시간 형식에서 초 부분 제거 (예: 14:30:00 -> 14:30)
+          const cleanStartTime = s.startTime ? s.startTime.substring(0, 5) : DEFAULT_START_TIME;
+          const cleanVisitTime = s.visitTime ? s.visitTime.substring(0, 5) : DEFAULT_VISIT_TIME;
+          
           settingsObj[storeId] = {
-            startTime: s.startTime || DEFAULT_START_TIME,
+            startTime: cleanStartTime,
             visitDate: s.visitDate ? dayjs(s.visitDate) : DEFAULT_VISIT_DATE,
-            visitTime: s.visitTime || DEFAULT_VISIT_TIME,
+            visitTime: cleanVisitTime,
           };
         });
         setStoreSettings(settingsObj);
@@ -189,7 +197,88 @@ const Settings = () => {
         background: '#0d1117',
         p: 2
       }}>
-        <Box maxWidth={1200} mx="auto" py={3}>
+        {/* 헤더 네비게이션 바 */}
+        <Box 
+          sx={{ 
+            position: 'sticky',
+            top: 0,
+            zIndex: 1000,
+            mb: 3,
+            background: '#161b22',
+            borderBottom: '1px solid #30363d',
+            backdropFilter: 'blur(10px)',
+            px: 2,
+            py: 1,
+          }}
+        >
+          <Stack 
+            direction="row" 
+            justifyContent="space-between" 
+            alignItems="center"
+            maxWidth={1200} 
+            mx="auto"
+          >
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Box sx={{ 
+                p: 1, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                color: '#0d1117'
+              }}>
+                <WatchIcon sx={{ fontSize: 22 }} />
+              </Box>
+              <Typography variant="h5" fontWeight={700} color="#c9b037">
+                롤렉스 자동화
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="text"
+                onClick={() => navigate('/dashboard')}
+                sx={{ 
+                  color: '#9198a1',
+                  fontSize: '0.85rem',
+                  '&:hover': { 
+                    background: 'rgba(201, 176, 55, 0.1)',
+                    color: '#c9b037'
+                  }
+                }}
+              >
+                대시보드
+              </Button>
+              <Button
+                variant="text"
+                onClick={() => navigate('/logs')}
+                sx={{ 
+                  color: '#9198a1',
+                  fontSize: '0.85rem',
+                  '&:hover': { 
+                    background: 'rgba(201, 176, 55, 0.1)',
+                    color: '#c9b037'
+                  }
+                }}
+              >
+                로그
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => navigate('/settings')}
+                sx={{ 
+                  background: 'rgba(201, 176, 55, 0.2)',
+                  color: '#c9b037',
+                  fontSize: '0.85rem',
+                  '&:hover': { 
+                    background: 'rgba(201, 176, 55, 0.3)',
+                  }
+                }}
+              >
+                설정
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
+
+        <Box maxWidth={1200} mx="auto" py={1}>
           {/* 헤더 */}
           <Paper sx={{ 
             p: 3, 
@@ -200,19 +289,6 @@ const Settings = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
           }}>
             <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-              <Button
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate('/')}
-                sx={{ 
-                  color: '#9198a1',
-                  '&:hover': { 
-                    background: 'rgba(201, 176, 55, 0.1)',
-                    color: '#c9b037'
-                  }
-                }}
-              >
-                대시보드로
-              </Button>
               <Box sx={{ 
                 p: 1.5, 
                 borderRadius: 2, 
@@ -240,7 +316,13 @@ const Settings = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
           }}>
             <Stack direction="row" alignItems="center" spacing={2} mb={3}>
-              <EmailIcon sx={{ color: '#c9b037' }} />
+              <Box sx={{ 
+                p: 1, 
+                borderRadius: 1.5, 
+                background: 'rgba(201, 176, 55, 0.15)',
+              }}>
+                <EmailIcon sx={{ color: '#c9b037', fontSize: 22 }} />
+              </Box>
               <Typography variant="h6" fontWeight={600} color="#f0f6fc">
                 개인 정보
               </Typography>
@@ -254,6 +336,20 @@ const Settings = () => {
                   disabled
                   fullWidth
                   variant="outlined"
+                  InputProps={{
+                    sx: {
+                      borderRadius: 1.5,
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#30363d'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#c9b037'
+                      },
+                    }
+                  }}
+                  InputLabelProps={{
+                    sx: { color: '#9198a1' }
+                  }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -265,7 +361,13 @@ const Settings = () => {
                     height: 56, 
                     borderRadius: 1.5,
                     fontWeight: 600,
-                    width: '100%'
+                    width: '100%',
+                    borderColor: '#30363d',
+                    color: '#c9b037',
+                    '&:hover': {
+                      borderColor: '#c9b037',
+                      background: 'rgba(201, 176, 55, 0.1)'
+                    }
                   }}
                 >
                   비밀번호 변경
@@ -278,6 +380,15 @@ const Settings = () => {
                     value={carrier}
                     label="통신사"
                     onChange={e => setCarrier(e.target.value)}
+                    sx={{
+                      borderRadius: 1.5,
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#30363d'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#c9b037'
+                      },
+                    }}
                   >
                     <MenuItem value="SKT">SKT</MenuItem>
                     <MenuItem value="KT">KT</MenuItem>
@@ -291,6 +402,20 @@ const Settings = () => {
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   fullWidth
+                  InputProps={{
+                    sx: {
+                      borderRadius: 1.5,
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#30363d'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#c9b037'
+                      },
+                    }
+                  }}
+                  InputLabelProps={{
+                    sx: { color: '#9198a1' }
+                  }}
                 />
               </Grid>
             </Grid>
@@ -327,10 +452,10 @@ const Settings = () => {
                       </Typography>
                       
                       <Stack spacing={3}>
-                        {/* 자동화 시작 시간 - 24시간 전체 */}
+                        {/* 자동화 시작 시간 - 24시간 전체 (1분 단위) */}
                         <Box>
                           <Typography variant="subtitle2" fontWeight={600} mb={1} color="#f0f6fc">
-                            🚀 자동화 시작 시간
+                            🚀 자동화 시작 시간 (1분 단위)
                           </Typography>
                           <FormControl fullWidth>
                             <Select
@@ -344,7 +469,7 @@ const Settings = () => {
                                 },
                               }}
                             >
-                              {ALL_TIME_OPTIONS.map(option => (
+                              {AUTOMATION_TIME_OPTIONS.map(option => (
                                 <MenuItem key={option.value} value={option.value}>
                                   {option.label}
                                 </MenuItem>
