@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
-import WatchIcon from '@mui/icons-material/Watch';
+import { Watch as WatchIcon } from '@mui/icons-material';
 import { login } from '../../api/rolex';
 import Toast from '../components/layout/Toast';
 
@@ -65,38 +65,80 @@ const Login = ({ onLogin }: LoginProps) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
-        p: 2
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+        p: 2,
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
+      {/* 배경 장식 요소들 */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '10%',
+          left: '10%',
+          width: 100,
+          height: 100,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, rgba(201, 176, 55, 0.1) 0%, rgba(244, 208, 63, 0.05) 100%)',
+          filter: 'blur(40px)',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: '20%',
+          right: '15%',
+          width: 150,
+          height: 150,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.05) 100%)',
+          filter: 'blur(60px)',
+        }}
+      />
+
       <Paper
         sx={{
           width: '100%',
-          maxWidth: 400,
-          p: 4,
-          borderRadius: 3,
-          background: 'white',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+          maxWidth: 450,
+          p: { xs: 3, md: 5 },
+          borderRadius: 4,
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+          border: '1px solid rgba(71, 85, 105, 0.3)',
+          boxShadow: '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(20px)',
+          position: 'relative',
+          zIndex: 1
         }}
       >
         {/* 로고 및 타이틀 */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box sx={{ 
+        <Box sx={{ textAlign: 'center', mb: 5 }}>
+          <Box sx={{
             display: 'inline-flex',
-            p: 2, 
-            borderRadius: 3, 
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            color: 'white',
-            mb: 2
+            p: 3,
+            borderRadius: 4,
+            background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+            color: '#0f172a',
+            mb: 3,
+            boxShadow: '0 10px 30px rgba(201, 176, 55, 0.4)'
           }}>
-            <WatchIcon sx={{ fontSize: 32 }} />
+            <WatchIcon sx={{ fontSize: 40 }} />
           </Box>
-          <Typography variant="h5" fontWeight={600} color="#1e293b" mb={1}>
-            ROLEX 예약 시스템
+          <Typography variant="h3" fontWeight={800} color="#c9b037" mb={1} sx={{
+            fontFamily: 'Playfair Display, serif',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            ROLEX
           </Typography>
-          <Typography variant="body2" color="#64748b">
-            자동화 시스템에 로그인하세요
+          <Typography variant="h6" color="#e2e8f0" fontWeight={600} mb={1}>
+            자동화 시스템
+          </Typography>
+          <Typography variant="body2" color="#94a3b8">
+            프리미엄 예약 자동화 플랫폼에 로그인하세요
           </Typography>
         </Box>
 
@@ -114,26 +156,34 @@ const Login = ({ onLogin }: LoginProps) => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailIcon sx={{ color: '#64748b' }} />
+                    <EmailIcon sx={{ color: '#94a3b8' }} />
                   </InputAdornment>
                 ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
+                sx: {
+                  background: 'rgba(15, 23, 42, 0.5)',
                   borderRadius: 2,
-                  '& fieldset': {
-                    borderColor: '#e2e8f0'
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(71, 85, 105, 0.3)'
                   },
-                  '&:hover fieldset': {
-                    borderColor: '#cbd5e1'
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(201, 176, 55, 0.5)'
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#3b82f6'
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#c9b037',
+                    borderWidth: 2
+                  }
+                }
+              }}
+              InputLabelProps={{
+                sx: {
+                  color: '#94a3b8',
+                  '&.Mui-focused': {
+                    color: '#c9b037'
                   }
                 }
               }}
             />
-            
+
             <TextField
               label="비밀번호"
               type="password"
@@ -146,43 +196,53 @@ const Login = ({ onLogin }: LoginProps) => {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon sx={{ color: '#64748b' }} />
+                    <LockIcon sx={{ color: '#94a3b8' }} />
                   </InputAdornment>
                 ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
+                sx: {
+                  background: 'rgba(15, 23, 42, 0.5)',
                   borderRadius: 2,
-                  '& fieldset': {
-                    borderColor: '#e2e8f0'
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(71, 85, 105, 0.3)'
                   },
-                  '&:hover fieldset': {
-                    borderColor: '#cbd5e1'
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(201, 176, 55, 0.5)'
                   },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#3b82f6'
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#c9b037',
+                    borderWidth: 2
+                  }
+                }
+              }}
+              InputLabelProps={{
+                sx: {
+                  color: '#94a3b8',
+                  '&.Mui-focused': {
+                    color: '#c9b037'
                   }
                 }
               }}
             />
-            
+
             <Button
               type="submit"
               variant="contained"
               size="large"
               fullWidth
               sx={{
-                py: 1.5,
+                py: 2,
                 borderRadius: 2,
-                fontSize: '1rem',
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                fontSize: '1.1rem',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                color: '#0f172a',
+                boxShadow: '0 8px 20px rgba(201, 176, 55, 0.4)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)',
-                }
+                  background: 'linear-gradient(135deg, #f4d03f 0%, #c9b037 100%)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 30px rgba(201, 176, 55, 0.6)',
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
             >
               로그인
@@ -191,36 +251,51 @@ const Login = ({ onLogin }: LoginProps) => {
         </form>
 
         {/* 하단 링크 */}
-        <Stack direction="row" justifyContent="space-between" mt={3}>
-          <Link
-            href="#"
-            underline="hover"
-            sx={{
-              color: '#64748b',
-              fontSize: '0.875rem',
-              '&:hover': { 
-                color: '#3b82f6'
-              }
-            }}
-          >
-            회원가입
-          </Link>
-          <Link
-            href="#"
-            underline="hover"
-            sx={{
-              color: '#64748b',
-              fontSize: '0.875rem',
-              '&:hover': { 
-                color: '#3b82f6'
-              }
-            }}
-          >
-            비밀번호 찾기
-          </Link>
-        </Stack>
+        {/*<Stack direction="row" justifyContent="space-between" mt={4}>*/}
+        {/*  <Link*/}
+        {/*    href="#"*/}
+        {/*    underline="hover"*/}
+        {/*    sx={{*/}
+        {/*      color: '#94a3b8',*/}
+        {/*      fontSize: '0.9rem',*/}
+        {/*      fontWeight: 500,*/}
+        {/*      '&:hover': { */}
+        {/*        color: '#c9b037'*/}
+        {/*      }*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    회원가입*/}
+        {/*  </Link>*/}
+        {/*  <Link*/}
+        {/*    href="#"*/}
+        {/*    underline="hover"*/}
+        {/*    sx={{*/}
+        {/*      color: '#94a3b8',*/}
+        {/*      fontSize: '0.9rem',*/}
+        {/*      fontWeight: 500,*/}
+        {/*      '&:hover': { */}
+        {/*        color: '#c9b037'*/}
+        {/*      }*/}
+        {/*    }}*/}
+        {/*  >*/}
+        {/*    비밀번호 찾기*/}
+        {/*  </Link>*/}
+        {/*</Stack>*/}
+
+        {/* 장식 요소 */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -2,
+            left: -2,
+            right: -2,
+            height: 2,
+            background: 'linear-gradient(90deg, transparent, #c9b037, transparent)',
+            borderRadius: '4px 4px 0 0'
+          }}
+        />
       </Paper>
-      
+
       <Toast open={toastOpen} message={toastMsg} severity="error" onClose={() => setToastOpen(false)} />
     </Box>
   );

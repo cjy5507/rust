@@ -1,7 +1,7 @@
 import { 
   Card, CardContent, Typography, TextField, Button, Stack, Box, Select, MenuItem, 
   InputLabel, FormControl, CircularProgress, Paper, Chip, ButtonGroup,
-  ToggleButton, ToggleButtonGroup, Slider, Alert
+  ToggleButton, ToggleButtonGroup, Slider, Alert, Divider
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -17,7 +17,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
-import WatchIcon from '@mui/icons-material/Watch';
+import { Watch as WatchIcon } from '@mui/icons-material';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate } from 'react-router-dom';
 
 const DEFAULT_START_TIME = '10:00';
@@ -167,26 +168,55 @@ const Settings = () => {
   if (loading) return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: '#0d1117',
+      background: 'transparent',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center'
     }}>
-      <CircularProgress size={60} sx={{ color: '#c9b037' }} />
+      <Paper sx={{
+        p: 6,
+        borderRadius: 3,
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+        border: '1px solid rgba(71, 85, 105, 0.3)',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(20px)',
+        textAlign: 'center'
+      }}>
+        <CircularProgress size={60} sx={{ color: '#c9b037', mb: 3 }} />
+        <Typography variant="h6" color="#e2e8f0" fontWeight={600}>
+          설정 불러오는 중...
+        </Typography>
+        <Typography variant="body2" color="#94a3b8" mt={1}>
+          잠시만 기다려주세요
+        </Typography>
+      </Paper>
     </Box>
   );
 
   if (error) return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: '#0d1117',
+      background: 'transparent',
       display: 'flex',
       justifyContent: 'center',
-      alignItems: 'center',
-      color: '#dc3545',
-      fontSize: '1.2rem'
+      alignItems: 'center'
     }}>
-      에러: {error}
+      <Paper sx={{
+        p: 6,
+        borderRadius: 3,
+        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+        border: '1px solid #ef4444',
+        boxShadow: '0 20px 40px rgba(239, 68, 68, 0.2)',
+        backdropFilter: 'blur(20px)',
+        textAlign: 'center'
+      }}>
+        <Typography variant="h6" color="#ef4444" fontWeight={600} mb={2}>
+          오류가 발생했습니다
+        </Typography>
+        <Typography variant="body2" color="#94a3b8">
+          {error}
+        </Typography>
+      </Paper>
     </Box>
   );
 
@@ -194,137 +224,72 @@ const Settings = () => {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ 
         minHeight: '100vh',
-        background: '#0d1117',
-        p: 2
+        background: 'transparent',
+        p: { xs: 1, md: 2 }
       }}>
-        {/* 헤더 네비게이션 바 */}
-        <Box 
-          sx={{ 
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-            mb: 3,
-            background: '#161b22',
-            borderBottom: '1px solid #30363d',
-            backdropFilter: 'blur(10px)',
-            px: 2,
-            py: 1,
-          }}
-        >
-          <Stack 
-            direction="row" 
-            justifyContent="space-between" 
-            alignItems="center"
-            maxWidth={1200} 
-            mx="auto"
-          >
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Box sx={{ 
-                p: 1, 
-                borderRadius: 2, 
-                background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
-                color: '#0d1117'
-              }}>
-                <WatchIcon sx={{ fontSize: 22 }} />
-              </Box>
-              <Typography variant="h5" fontWeight={700} color="#c9b037">
-                롤렉스 자동화
-              </Typography>
-            </Stack>
-            <Stack direction="row" spacing={1}>
-              <Button
-                variant="text"
-                onClick={() => navigate('/dashboard')}
-                sx={{ 
-                  color: '#9198a1',
-                  fontSize: '0.85rem',
-                  '&:hover': { 
-                    background: 'rgba(201, 176, 55, 0.1)',
-                    color: '#c9b037'
-                  }
-                }}
-              >
-                대시보드
-              </Button>
-              <Button
-                variant="text"
-                onClick={() => navigate('/logs')}
-                sx={{ 
-                  color: '#9198a1',
-                  fontSize: '0.85rem',
-                  '&:hover': { 
-                    background: 'rgba(201, 176, 55, 0.1)',
-                    color: '#c9b037'
-                  }
-                }}
-              >
-                로그
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/settings')}
-                sx={{ 
-                  background: 'rgba(201, 176, 55, 0.2)',
-                  color: '#c9b037',
-                  fontSize: '0.85rem',
-                  '&:hover': { 
-                    background: 'rgba(201, 176, 55, 0.3)',
-                  }
-                }}
-              >
-                설정
-              </Button>
-            </Stack>
-          </Stack>
-        </Box>
-
         <Box maxWidth={1200} mx="auto" py={1}>
-          {/* 헤더 */}
+          {/* 헤더 개선 */}
           <Paper sx={{ 
-            p: 3, 
-            mb: 3, 
-            borderRadius: 2,
-            background: '#161b22',
-            border: '1px solid #30363d',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+            p: { xs: 3, md: 4 }, 
+            mb: 4, 
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+            border: '1px solid rgba(71, 85, 105, 0.3)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(20px)'
           }}>
-            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+            <Stack direction="row" alignItems="center" spacing={3} mb={3}>
               <Box sx={{ 
-                p: 1.5, 
-                borderRadius: 2, 
+                p: 2, 
+                borderRadius: 3, 
                 background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
-                color: '#0d1117'
+                color: '#0f172a',
+                boxShadow: '0 8px 20px rgba(201, 176, 55, 0.3)'
               }}>
-                <AccessTimeIcon sx={{ fontSize: 24 }} />
+                <SettingsIcon sx={{ fontSize: 32 }} />
               </Box>
-              <Typography variant="h4" fontWeight={700} color="#c9b037">
-                자동화 설정
-              </Typography>
+              <Box>
+                <Typography variant="h3" fontWeight={800} color="#c9b037" sx={{
+                  fontFamily: 'Playfair Display, serif',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                  background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  시스템 설정
+                </Typography>
+                <Typography variant="h6" color="#e2e8f0" fontWeight={500} mt={0.5}>
+                  자동화 매개변수 및 개인정보 관리
+                </Typography>
+              </Box>
             </Stack>
-            <Typography variant="body1" color="#9198a1">
-              매장별 예약 시간과 개인 정보를 설정하세요
+            <Typography variant="body1" color="#94a3b8" sx={{ fontSize: '1.1rem' }}>
+              매장별 예약 시간과 개인 정보를 설정하여 최적의 자동화 환경을 구성하세요
             </Typography>
           </Paper>
 
-          {/* 공통 설정 */}
+          {/* 개인 정보 섹션 개선 */}
           <Paper sx={{ 
-            p: 3, 
-            mb: 3, 
-            borderRadius: 2,
-            background: '#161b22',
-            border: '1px solid #30363d',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+            p: { xs: 3, md: 4 }, 
+            mb: 4, 
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+            border: '1px solid rgba(71, 85, 105, 0.3)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(20px)'
           }}>
-            <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
               <Box sx={{ 
-                p: 1, 
-                borderRadius: 1.5, 
-                background: 'rgba(201, 176, 55, 0.15)',
+                p: 1.5, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(29, 78, 216, 0.1) 100%)',
+                border: '1px solid rgba(59, 130, 246, 0.3)'
               }}>
-                <EmailIcon sx={{ color: '#c9b037', fontSize: 22 }} />
+                <EmailIcon sx={{ color: '#3b82f6', fontSize: 24 }} />
               </Box>
-              <Typography variant="h6" fontWeight={600} color="#f0f6fc">
-                개인 정보
+              <Typography variant="h5" fontWeight={700} color="#f1f5f9">
+                개인 정보 설정
               </Typography>
             </Stack>
             
@@ -423,16 +388,24 @@ const Settings = () => {
 
           {/* 매장별 설정 */}
           <Paper sx={{ 
-            p: 3, 
-            mb: 3, 
-            borderRadius: 2,
-            background: '#161b22',
-            border: '1px solid #30363d',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+            p: { xs: 3, md: 4 }, 
+            mb: 4, 
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+            border: '1px solid rgba(71, 85, 105, 0.3)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(20px)'
           }}>
-            <Stack direction="row" alignItems="center" spacing={2} mb={3}>
-              <CalendarTodayIcon sx={{ color: '#c9b037' }} />
-              <Typography variant="h6" fontWeight={600} color="#f0f6fc">
+            <Stack direction="row" alignItems="center" spacing={2} mb={4}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%)',
+                border: '1px solid rgba(16, 185, 129, 0.3)'
+              }}>
+                <CalendarTodayIcon sx={{ color: '#10b981', fontSize: 24 }} />
+              </Box>
+              <Typography variant="h5" fontWeight={700} color="#f1f5f9">
                 매장별 예약 설정
               </Typography>
             </Stack>
@@ -534,7 +507,7 @@ const Settings = () => {
           </Paper>
 
           {/* 저장 버튼 */}
-          <Stack direction="row" justifyContent="center">
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
             <Button
               variant="contained"
               size="large"
@@ -542,16 +515,29 @@ const Settings = () => {
               onClick={handleSave}
               disabled={loading}
               sx={{
-                px: 4,
-                py: 1.5,
-                borderRadius: 2,
-                fontSize: '1.1rem',
+                px: 6,
+                py: 2,
+                borderRadius: 3,
+                fontSize: '1.2rem',
                 fontWeight: 700,
+                background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                color: '#0f172a',
+                boxShadow: '0 8px 20px rgba(201, 176, 55, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #f4d03f 0%, #c9b037 100%)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 30px rgba(201, 176, 55, 0.6)',
+                },
+                '&:disabled': {
+                  background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                  color: '#94a3b8'
+                },
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
             >
               설정 저장
             </Button>
-          </Stack>
+          </Box>
         </Box>
 
         <PasswordChangeDialog

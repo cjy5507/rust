@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, Typography } from '@mui/material';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/layout/Toast';
 
 interface Props {
   open: boolean;
@@ -11,10 +13,13 @@ const PasswordChangeDialog = ({ open, onClose, onSubmit }: Props) => {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [nextCheck, setNextCheck] = useState('');
+  
+  // 토스트 훅
+  const { toast, showWarning, hideToast } = useToast();
 
   const handleSubmit = () => {
     if (next !== nextCheck) {
-      alert('새 비밀번호가 일치하지 않습니다.');
+      showWarning('새 비밀번호가 일치하지 않습니다.');
       return;
     }
     onSubmit(current, next);
@@ -75,6 +80,14 @@ const PasswordChangeDialog = ({ open, onClose, onSubmit }: Props) => {
         <Button onClick={onClose} variant="outlined" sx={{ minWidth: 100 }}>취소</Button>
         <Button onClick={handleSubmit} variant="contained" color="primary" sx={{ minWidth: 100 }}>변경</Button>
       </DialogActions>
+      
+      {/* Toast 컴포넌트 */}
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={hideToast}
+      />
     </Dialog>
   );
 };

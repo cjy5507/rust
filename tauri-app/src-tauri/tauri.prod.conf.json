@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.tauri.rolex-automation",
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1421",
-    "beforeBuildCommand": "npm run build:prod",
+    "beforeDevCommand": "",
+    "devUrl": "",
+    "beforeBuildCommand": "",
     "frontendDist": "../dist"
   },
   "app": {

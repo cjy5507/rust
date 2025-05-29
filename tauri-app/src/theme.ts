@@ -155,7 +155,25 @@ const rolexTheme = createTheme({
     "0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.3)",
     "0 20px 25px rgba(0,0,0,0.4), 0 10px 10px rgba(0,0,0,0.3)",
     "0 25px 50px rgba(0,0,0,0.5), 0 10px 20px rgba(0,0,0,0.4)",
-    // ... 나머지 shadows
+    "0 25px 50px rgba(0,0,0,0.5), 0 12px 20px rgba(0,0,0,0.4)",
+    "0 25px 50px rgba(0,0,0,0.6), 0 14px 20px rgba(0,0,0,0.5)",
+    "0 25px 50px rgba(0,0,0,0.6), 0 16px 25px rgba(0,0,0,0.5)",
+    "0 25px 50px rgba(0,0,0,0.7), 0 18px 25px rgba(0,0,0,0.5)",
+    "0 25px 50px rgba(0,0,0,0.7), 0 20px 30px rgba(0,0,0,0.6)",
+    "0 25px 50px rgba(0,0,0,0.8), 0 22px 30px rgba(0,0,0,0.6)",
+    "0 25px 50px rgba(0,0,0,0.8), 0 24px 35px rgba(0,0,0,0.7)",
+    "0 25px 50px rgba(0,0,0,0.9), 0 26px 35px rgba(0,0,0,0.7)",
+    "0 25px 50px rgba(0,0,0,0.9), 0 28px 40px rgba(0,0,0,0.8)",
+    "0 25px 50px rgba(0,0,0,1.0), 0 30px 40px rgba(0,0,0,0.8)",
+    "0 30px 60px rgba(0,0,0,1.0), 0 32px 45px rgba(0,0,0,0.9)",
+    "0 30px 60px rgba(0,0,0,1.0), 0 34px 45px rgba(0,0,0,0.9)",
+    "0 30px 60px rgba(0,0,0,1.0), 0 36px 50px rgba(0,0,0,1.0)",
+    "0 30px 60px rgba(0,0,0,1.0), 0 38px 50px rgba(0,0,0,1.0)",
+    "0 35px 70px rgba(0,0,0,1.0), 0 40px 55px rgba(0,0,0,1.0)",
+    "0 35px 70px rgba(0,0,0,1.0), 0 42px 55px rgba(0,0,0,1.0)",
+    "0 35px 70px rgba(0,0,0,1.0), 0 44px 60px rgba(0,0,0,1.0)",
+    "0 35px 70px rgba(0,0,0,1.0), 0 46px 60px rgba(0,0,0,1.0)",
+    "0 40px 80px rgba(0,0,0,1.0), 0 48px 65px rgba(0,0,0,1.0)"
   ],
   components: {
     MuiCssBaseline: {

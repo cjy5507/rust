@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Box, Button } from "@mui/material";
-import { Menu as MenuIcon, Close as CloseIcon } from "@mui/icons-material";
+import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Box, Button, Divider, ListItemIcon } from "@mui/material";
+import { Menu as MenuIcon, Close as CloseIcon, Dashboard as DashboardIcon, Settings as SettingsIcon, Logout as LogoutIcon, AccessTime as AccessTimeIcon, Watch as WatchIcon } from "@mui/icons-material";
 
 const menu = [
-  { label: "대시보드", path: "/dashboard" },
-  { label: "설정", path: "/settings" },
+  { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
+  { label: "설정", path: "/settings", icon: <SettingsIcon /> },
 ];
 
 interface MainLayoutProps {
@@ -37,61 +37,102 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
   }, []);
 
   return (
-    <Box sx={{ minHeight: '100vh', background: '#f8fafc' }}>
-      {/* 상단 AppBar */}
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+      {/* 상단 AppBar 개선 */}
       <AppBar 
         position="fixed" 
         sx={{ 
-          background: '#ffffff',
-          color: '#1e293b',
-          borderBottom: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+          zIndex: 1300
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton 
               edge="start" 
               onClick={() => setDrawerOpen(true)}
-              sx={{ color: '#64748b', mr: 2 }}
+              sx={{ 
+                color: '#e2e8f0', 
+                mr: 2,
+                p: 1.5,
+                borderRadius: 2,
+                '&:hover': {
+                  background: 'rgba(201, 176, 55, 0.1)',
+                  color: '#c9b037'
+                }
+              }}
             >
               <MenuIcon />
             </IconButton>
-            <Typography 
-              variant="h6" 
-              component="div" 
-              sx={{ 
-                fontWeight: 600,
-                color: '#1e293b',
-                fontSize: '1.25rem'
-              }}
-            >
-              ROLEX 예약 시스템
-            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                p: 1, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                color: '#0f172a'
+              }}>
+                <WatchIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography 
+                variant="h6" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 700,
+                  color: '#e2e8f0',
+                  fontSize: '1.25rem',
+                  fontFamily: 'Playfair Display, serif'
+                }}
+              >
+                ROLEX 자동화
+              </Typography>
+            </Box>
           </Box>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: '#64748b',
-                fontWeight: 500,
-                fontSize: '0.9rem'
-              }}
-            >
-              {clock}
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            {/* 시계 표시 개선 */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+              background: 'rgba(15, 23, 42, 0.3)',
+              border: '1px solid rgba(71, 85, 105, 0.3)'
+            }}>
+              <AccessTimeIcon sx={{ fontSize: 18, color: '#c9b037' }} />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#e2e8f0',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  fontFamily: 'monospace'
+                }}
+              >
+                {clock}
+              </Typography>
+            </Box>
+            
             <Button 
               variant="outlined" 
               size="small"
+              startIcon={<LogoutIcon />}
               onClick={onLogout}
               sx={{
-                borderColor: '#e2e8f0',
-                color: '#475569',
+                borderColor: 'rgba(239, 68, 68, 0.3)',
+                color: '#ef4444',
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 2,
                 '&:hover': {
                   borderColor: '#ef4444',
                   color: '#ef4444',
-                  background: '#fef2f2'
+                  background: 'rgba(239, 68, 68, 0.1)'
                 }
               }}
             >
@@ -101,36 +142,63 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
         </Toolbar>
       </AppBar>
 
-      {/* Drawer 메뉴 */}
+      {/* Drawer 메뉴 개선 */}
       <Drawer
         anchor="left"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         PaperProps={{
           sx: {
-            width: 280,
-            background: '#ffffff',
-            borderRight: '1px solid #e2e8f0'
+            width: 320,
+            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(51, 65, 85, 0.95) 100%)',
+            backdropFilter: 'blur(20px)',
+            border: 'none',
+            borderRight: '1px solid rgba(71, 85, 105, 0.3)'
           }
         }}
       >
-        <Box sx={{ p: 2, borderBottom: '1px solid #e2e8f0' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-              메뉴
-            </Typography>
+        {/* 드로어 헤더 */}
+        <Box sx={{ 
+          p: 3, 
+          borderBottom: '1px solid rgba(71, 85, 105, 0.3)',
+          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%)'
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                p: 1.5, 
+                borderRadius: 2, 
+                background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                color: '#0f172a'
+              }}>
+                <WatchIcon sx={{ fontSize: 24 }} />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: '#e2e8f0', fontFamily: 'Playfair Display, serif' }}>
+                ROLEX
+              </Typography>
+            </Box>
             <IconButton 
               onClick={() => setDrawerOpen(false)}
-              sx={{ color: '#64748b' }}
+              sx={{ 
+                color: '#94a3b8',
+                '&:hover': {
+                  color: '#ef4444',
+                  background: 'rgba(239, 68, 68, 0.1)'
+                }
+              }}
             >
               <CloseIcon />
             </IconButton>
           </Box>
+          <Typography variant="body2" color="#94a3b8" sx={{ fontWeight: 500 }}>
+            자동화 시스템 메뉴
+          </Typography>
         </Box>
         
-        <List sx={{ p: 1 }}>
-          {menu.map(item => (
-            <ListItem key={item.path} disablePadding>
+        {/* 메뉴 리스트 */}
+        <List sx={{ p: 2, flex: 1 }}>
+          {menu.map((item, index) => (
+            <ListItem key={item.path} disablePadding sx={{ mb: 1 }}>
               <ListItemButton
                 selected={location.pathname === item.path}
                 onClick={() => { 
@@ -138,41 +206,81 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
                   setDrawerOpen(false); 
                 }}
                 sx={{
-                  borderRadius: 1.5,
-                  mx: 1,
-                  my: 0.5,
+                  borderRadius: 2,
+                  mx: 0.5,
+                  py: 1.5,
+                  px: 2,
+                  transition: 'all 0.3s ease',
                   '&.Mui-selected': {
-                    background: '#eff6ff',
-                    color: '#3b82f6',
+                    background: 'linear-gradient(135deg, rgba(201, 176, 55, 0.15) 0%, rgba(244, 208, 63, 0.1) 100%)',
+                    color: '#c9b037',
+                    border: '1px solid rgba(201, 176, 55, 0.3)',
                     '&:hover': {
-                      background: '#dbeafe',
+                      background: 'linear-gradient(135deg, rgba(201, 176, 55, 0.2) 0%, rgba(244, 208, 63, 0.15) 100%)',
                     }
                   },
                   '&:hover': {
-                    background: '#f8fafc',
+                    background: 'rgba(71, 85, 105, 0.2)',
+                    transform: 'translateX(4px)'
                   }
                 }}
               >
+                <ListItemIcon sx={{ 
+                  color: location.pathname === item.path ? '#c9b037' : '#94a3b8',
+                  minWidth: 40
+                }}>
+                  {item.icon}
+                </ListItemIcon>
                 <ListItemText 
                   primary={item.label}
                   primaryTypographyProps={{
-                    fontWeight: location.pathname === item.path ? 600 : 500,
-                    fontSize: '0.95rem'
+                    fontWeight: location.pathname === item.path ? 700 : 500,
+                    fontSize: '1rem',
+                    color: location.pathname === item.path ? '#c9b037' : '#e2e8f0'
                   }}
                 />
+                {location.pathname === item.path && (
+                  <Box sx={{
+                    width: 4,
+                    height: 20,
+                    borderRadius: 2,
+                    background: 'linear-gradient(135deg, #c9b037 0%, #f4d03f 100%)',
+                    ml: 1
+                  }} />
+                )}
               </ListItemButton>
             </ListItem>
           ))}
         </List>
+
+        <Divider sx={{ borderColor: 'rgba(71, 85, 105, 0.3)' }} />
+
+        {/* 드로어 푸터 */}
+        <Box sx={{ p: 3 }}>
+          <Box sx={{ 
+            p: 2, 
+            borderRadius: 2, 
+            background: 'rgba(15, 23, 42, 0.3)',
+            border: '1px solid rgba(71, 85, 105, 0.3)',
+            textAlign: 'center'
+          }}>
+            <Typography variant="body2" color="#94a3b8" fontWeight={500}>
+              Premium Automation
+            </Typography>
+            <Typography variant="caption" color="#64748b">
+              v1.0.0
+            </Typography>
+          </Box>
+        </Box>
       </Drawer>
 
       {/* 메인 컨텐츠 */}
       <Box 
         component="main" 
         sx={{ 
-          pt: '64px', // AppBar 높이만큼 패딩
+          pt: '80px', // AppBar 높이만큼 패딩
           minHeight: '100vh',
-          background: '#f8fafc'
+          background: 'transparent'
         }}
       >
         {children}

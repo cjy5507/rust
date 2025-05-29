@@ -14,6 +14,14 @@ function App() {
     return !!localStorage.getItem('token');
   });
 
+  // 환경 정보 로깅
+  console.log('🚀 App Environment Info:');
+  console.log('- Mode:', import.meta.env.MODE);
+  console.log('- DEV:', import.meta.env.DEV);
+  console.log('- PROD:', import.meta.env.PROD);
+  console.log('- API Base URL:', import.meta.env.VITE_API_BASE_URL);
+  console.log('- Base URL:', import.meta.env.BASE_URL);
+
   // 로그인 성공 시 호출될 콜백
   const handleLogin = () => setIsAuthenticated(true);
   // 로그아웃 시 호출될 콜백
