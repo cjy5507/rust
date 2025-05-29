@@ -1,8 +1,9 @@
-import { Card, CardContent, TextField, Button, Stack, Box, Link, InputAdornment } from '@mui/material';
+import { Card, CardContent, TextField, Button, Stack, Box, Link, InputAdornment, Typography, Paper } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
+import WatchIcon from '@mui/icons-material/Watch';
 import { login } from '../../api/rolex';
 import Toast from '../components/layout/Toast';
 
@@ -44,6 +45,7 @@ const Login = ({ onLogin }: LoginProps) => {
         if (data.email) localStorage.setItem('email', data.email);
         if (data.username) localStorage.setItem('username', data.username);
         if (data.role) localStorage.setItem('role', data.role);
+        if (data.carrier) localStorage.setItem('carrier', data.carrier);
         if (naverTime) {
           localStorage.setItem('naverTime', naverTime ? naverTime : '');
         }
@@ -58,132 +60,170 @@ const Login = ({ onLogin }: LoginProps) => {
 
   return (
     <Box
-      minHeight="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
       sx={{
-        background: 'linear-gradient(135deg, #181A20 60%, #FFD700 100%)',
-        fontFamily: 'Pretendard, Montserrat, Noto Sans KR, sans-serif',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+        p: 2
       }}
     >
-      <Card
+      <Paper
         sx={{
-          minWidth: 360,
+          width: '100%',
           maxWidth: 400,
           p: 4,
-          boxShadow: '0 8px 32px 0 rgba(0,0,0,0.25)',
-          borderRadius: 5,
-          background: 'rgba(24,26,32,0.98)',
-          border: '2px solid #FFD700',
+          borderRadius: 3,
+          background: 'white',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
         }}
       >
-        <CardContent>
-          <form onSubmit={handleLogin}>
-            <Stack spacing={3} mt={2}>
-              <TextField
-                label="이메일"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                fullWidth
-                variant="filled"
-                autoComplete="email"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <EmailIcon sx={{ color: '#FFD700' }} />
-                    </InputAdornment>
-                  ),
-                  sx: {
-                    background: '#181A20',
-                    borderRadius: 2,
-                    color: '#fff',
-                  },
-                }}
-                InputLabelProps={{
-                  sx: { color: '#FFD700', fontWeight: 700 },
-                }}
-              />
-              <TextField
-                label="비밀번호"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                fullWidth
-                variant="filled"
-                autoComplete="current-password"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon sx={{ color: '#FFD700' }} />
-                    </InputAdornment>
-                  ),
-                  sx: {
-                    background: '#181A20',
-                    borderRadius: 2,
-                    color: '#fff',
-                  },
-                }}
-                InputLabelProps={{
-                  sx: { color: '#FFD700', fontWeight: 700 },
-                }}
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                sx={{
-                  fontWeight: 900,
-                  fontSize: 18,
-                  background: 'linear-gradient(90deg, #FFD700 60%, #BFA14A 100%)',
-                  color: '#181A20',
+        {/* 로고 및 타이틀 */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Box sx={{ 
+            display: 'inline-flex',
+            p: 2, 
+            borderRadius: 3, 
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            color: 'white',
+            mb: 2
+          }}>
+            <WatchIcon sx={{ fontSize: 32 }} />
+          </Box>
+          <Typography variant="h5" fontWeight={600} color="#1e293b" mb={1}>
+            ROLEX 예약 시스템
+          </Typography>
+          <Typography variant="body2" color="#64748b">
+            자동화 시스템에 로그인하세요
+          </Typography>
+        </Box>
+
+        <form onSubmit={handleLogin}>
+          <Stack spacing={3}>
+            <TextField
+              label="이메일"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              fullWidth
+              variant="outlined"
+              autoComplete="email"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailIcon sx={{ color: '#64748b' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  boxShadow: '0 2px 8px 0 rgba(255,215,0,0.18)',
-                  '&:hover': {
-                    background: 'linear-gradient(90deg, #181A20 60%, #FFD700 100%)',
-                    color: '#FFD700',
+                  '& fieldset': {
+                    borderColor: '#e2e8f0'
                   },
-                }}
-                fullWidth
-              >
-                로그인
-              </Button>
-            </Stack>
-          </form>
-          <Stack direction="row" justifyContent="space-between" mt={3}>
-            <Link
-              href="#"
-              underline="hover"
-              fontWeight={700}
-              fontSize={15}
+                  '&:hover fieldset': {
+                    borderColor: '#cbd5e1'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#3b82f6'
+                  }
+                }
+              }}
+            />
+            
+            <TextField
+              label="비밀번호"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              fullWidth
+              variant="outlined"
+              autoComplete="current-password"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockIcon sx={{ color: '#64748b' }} />
+                  </InputAdornment>
+                ),
+              }}
               sx={{
-                color: '#FFD700',
-                '&:hover': { color: '#fff', textDecoration: 'underline' },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  '& fieldset': {
+                    borderColor: '#e2e8f0'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#cbd5e1'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#3b82f6'
+                  }
+                }
+              }}
+            />
+            
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              fullWidth
+              sx={{
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 6px 16px rgba(59, 130, 246, 0.4)',
+                }
               }}
             >
-              회원가입
-            </Link>
-            <Link
-              href="#"
-              underline="hover"
-              fontWeight={700}
-              fontSize={15}
-              sx={{
-                color: '#FFD700',
-                '&:hover': { color: '#fff', textDecoration: 'underline' },
-              }}
-            >
-              비밀번호 찾기
-            </Link>
+              로그인
+            </Button>
           </Stack>
-        </CardContent>
-      </Card>
+        </form>
+
+        {/* 하단 링크 */}
+        <Stack direction="row" justifyContent="space-between" mt={3}>
+          <Link
+            href="#"
+            underline="hover"
+            sx={{
+              color: '#64748b',
+              fontSize: '0.875rem',
+              '&:hover': { 
+                color: '#3b82f6'
+              }
+            }}
+          >
+            회원가입
+          </Link>
+          <Link
+            href="#"
+            underline="hover"
+            sx={{
+              color: '#64748b',
+              fontSize: '0.875rem',
+              '&:hover': { 
+                color: '#3b82f6'
+              }
+            }}
+          >
+            비밀번호 찾기
+          </Link>
+        </Stack>
+      </Paper>
+      
       <Toast open={toastOpen} message={toastMsg} severity="error" onClose={() => setToastOpen(false)} />
     </Box>
   );
 };
 
-export default Login; 
+export default Login;

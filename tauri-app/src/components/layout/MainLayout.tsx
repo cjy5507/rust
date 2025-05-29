@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import './MainLayout.css';
+import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Box, Button } from "@mui/material";
+import { Menu as MenuIcon, Close as CloseIcon } from "@mui/icons-material";
 
 const menu = [
   { label: "대시보드", path: "/dashboard" },
-  { label: "예약", path: "/reservation" },
   { label: "설정", path: "/settings" },
 ];
-
-const fontFamily = 'Pretendard, Noto Sans KR, Montserrat, Inter, sans-serif';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -39,57 +37,146 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#101315', fontFamily }}>
+    <Box sx={{ minHeight: '100vh', background: '#f8fafc' }}>
       {/* 상단 AppBar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', background: '#101315', borderBottom: '2px solid #FFD700', boxShadow: '0 4px 24px 0 rgba(0,0,0,0.18)', position: 'fixed', width: '100%', zIndex: 100 }}>
-        <button aria-label="메뉴" style={{ background: 'none', border: 'none', color: '#FFD700', fontSize: 28 }} onClick={() => setDrawerOpen(true)}>
-          ☰
-        </button>
-        <span className="appbar-title">
-          ROLEX 예약 시스템
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{ color: '#FFD700', fontWeight: 700, marginRight: 24, fontSize: 18 }}>{clock}</span>
-          <button type="button" className="logout-btn" onClick={onLogout}>
-            로그아웃
-          </button>
-        </div>
-      </div>
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          background: '#ffffff',
+          color: '#1e293b',
+          borderBottom: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton 
+              edge="start" 
+              onClick={() => setDrawerOpen(true)}
+              sx={{ color: '#64748b', mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography 
+              variant="h6" 
+              component="div" 
+              sx={{ 
+                fontWeight: 600,
+                color: '#1e293b',
+                fontSize: '1.25rem'
+              }}
+            >
+              ROLEX 예약 시스템
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: '#64748b',
+                fontWeight: 500,
+                fontSize: '0.9rem'
+              }}
+            >
+              {clock}
+            </Typography>
+            <Button 
+              variant="outlined" 
+              size="small"
+              onClick={onLogout}
+              sx={{
+                borderColor: '#e2e8f0',
+                color: '#475569',
+                '&:hover': {
+                  borderColor: '#ef4444',
+                  color: '#ef4444',
+                  background: '#fef2f2'
+                }
+              }}
+            >
+              로그아웃
+            </Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
       {/* Drawer 메뉴 */}
-      {drawerOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: 320, height: '100vh', background: '#181A20', color: '#f5f5f5', borderRight: '2px solid #FFD700', zIndex: 200, padding: 24 }}>
-          <div style={{ fontWeight: 900, color: '#FFD700', fontSize: 24, marginBottom: 16 }}>메뉴</div>
-          <div style={{ borderBottom: '2px solid #FFD700', marginBottom: 16 }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {menu.map(item => (
-              <button
-                key={item.path}
-                style={{
-                  background: location.pathname === item.path ? '#FFD700' : 'transparent',
-                  color: location.pathname === item.path ? '#181A20' : '#f5f5f5',
-                  fontWeight: location.pathname === item.path ? 900 : 700,
-                  fontSize: 18,
-                  borderRadius: 8,
-                  padding: '12px 16px',
-                  border: 'none',
-                  textAlign: 'left',
-                  cursor: 'pointer',
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: {
+            width: 280,
+            background: '#ffffff',
+            borderRight: '1px solid #e2e8f0'
+          }
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: '1px solid #e2e8f0' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+              메뉴
+            </Typography>
+            <IconButton 
+              onClick={() => setDrawerOpen(false)}
+              sx={{ color: '#64748b' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </Box>
+        
+        <List sx={{ p: 1 }}>
+          {menu.map(item => (
+            <ListItem key={item.path} disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => { 
+                  navigate(item.path); 
+                  setDrawerOpen(false); 
                 }}
-                onClick={() => { navigate(item.path); setDrawerOpen(false); }}
+                sx={{
+                  borderRadius: 1.5,
+                  mx: 1,
+                  my: 0.5,
+                  '&.Mui-selected': {
+                    background: '#eff6ff',
+                    color: '#3b82f6',
+                    '&:hover': {
+                      background: '#dbeafe',
+                    }
+                  },
+                  '&:hover': {
+                    background: '#f8fafc',
+                  }
+                }}
               >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <button style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#FFD700', fontSize: 28 }} onClick={() => setDrawerOpen(false)}>
-            ×
-          </button>
-        </div>
-      )}
+                <ListItemText 
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight: location.pathname === item.path ? 600 : 500,
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Drawer>
+
       {/* 메인 컨텐츠 */}
-      <div style={{ paddingTop: 96, paddingLeft: 32, paddingRight: 32, minHeight: '100vh', background: '#101315' }}>
+      <Box 
+        component="main" 
+        sx={{ 
+          pt: '64px', // AppBar 높이만큼 패딩
+          minHeight: '100vh',
+          background: '#f8fafc'
+        }}
+      >
         {children}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
-} 
+}

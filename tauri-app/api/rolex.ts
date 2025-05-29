@@ -4,7 +4,7 @@ const API_BASE =
     : 'http://bcra.store/api/rolex';
 
 // 1. 로그인
-export async function login(email: string, password: string, clientTime?: string) {
+export async function login(email: string, password: string, clientTime?: string | null) {
   const body: any = { email, password };
   if (clientTime) body.clientTime = clientTime;
   const res = await fetch(`${API_BASE}/login`, {
