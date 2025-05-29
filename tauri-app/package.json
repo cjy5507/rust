@@ -12,7 +12,8 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "start:dev": "tauri dev",
-    "start:prod": "npm run build:prod && tauri build --debug",
+    "start:prod": "node scripts/run-prod.js",
+    "start:prod:simple": "npm run build:prod && cross-env NODE_ENV=production tauri build --debug && .\\src-tauri\\target\\debug\\tauri-app.exe",
     "build:prod:run": "npm run build:prod && tauri build",
     "start" : "npm run build:prod:run"
   },

@@ -86,10 +86,21 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    // API URL 확인 로그
-    console.log('🌐 Current Environment:', import.meta.env.MODE);
-    console.log('🔗 API Base URL:', import.meta.env.VITE_API_BASE_URL);
-    addLog(`환경: ${import.meta.env.MODE} | API: ${import.meta.env.VITE_API_BASE_URL}`, 'info');
+    // API URL 확인 로그 - 더 상세하게
+    const currentMode = import.meta.env.MODE;
+    const currentAPI = import.meta.env.VITE_API_BASE_URL;
+    const isDev = import.meta.env.DEV;
+    const isProd = import.meta.env.PROD;
+    
+    console.log('🌐 Environment Details:');
+    console.log('- MODE:', currentMode);
+    console.log('- DEV:', isDev);
+    console.log('- PROD:', isProd);
+    console.log('- API URL:', currentAPI);
+    console.log('- All env vars:', import.meta.env);
+    
+    addLog(`환경: ${currentMode} | DEV:${isDev} | PROD:${isProd}`, 'info');
+    addLog(`API URL: ${currentAPI}`, 'info');
     
     // 데이터 초기화
     const email = localStorage.getItem('email') || '';
