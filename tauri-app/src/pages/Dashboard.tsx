@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Button, Chip, Paper, Stack, Box, ChipProps, Tooltip, Fab } from '@mui/material';
+import { Card, CardContent, Typography, Button, Chip, Paper, Stack, Box, ChipProps, Tooltip, Fab, Checkbox, FormControlLabel } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -38,6 +38,7 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [userSettings, setUserSettings] = useState<any>({});
   const [email, setEmail] = useState<string>('');
+  const [selectedStoreIds, setSelectedStoreIds] = useState<any[]>([]);
 
   // 실시간 시계 상태
   const [clock, setClock] = useState<string>('');
@@ -91,9 +92,18 @@ const Dashboard = () => {
     // 여기에 실제 자동화 로직 연결
   };
 
-  const handleStart = (store: any) => {
-    const setting = userSettings[store.id];
-    runAutomation(store, setting);
+  const handleToggleStore = (storeId: any) => {
+    setSelectedStoreIds(prev =>
+      prev.includes(storeId) ? prev.filter((id: any) => id !== storeId) : [...prev, storeId]
+    );
+  };
+
+  const handleBatchStart = () => {
+    const selectedStores = stores.filter(store => selectedStoreIds.includes(store.id));
+    selectedStores.forEach(store => {
+      const setting = userSettings[store.id];
+      runAutomation(store, setting);
+    });
   };
 
   return (
@@ -103,6 +113,18 @@ const Dashboard = () => {
           <Typography variant="h4" fontWeight={900} color="primary" letterSpacing={2}>
             대시보드
           </Typography>
+        </Grid>
+        <Grid item xs={12} sm={4} style={{ textAlign: 'right' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PlayArrowIcon />}
+            sx={{ fontWeight: 900, borderRadius: 2 }}
+            disabled={selectedStoreIds.length === 0}
+            onClick={handleBatchStart}
+          >
+            선택된 매장 자동화 시작
+          </Button>
         </Grid>
       </Grid>
 
@@ -117,6 +139,17 @@ const Dashboard = () => {
         <Grid container spacing={3} mb={4}>
           {stores.map(store => (
             <Grid item xs={4} sm={4} md={4} lg={4} xl={4} key={store.id}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedStoreIds.includes(store.id)}
+                    onChange={() => handleToggleStore(store.id)}
+                    color="primary"
+                  />
+                }
+                label="선택"
+                sx={{ mb: 1 }}
+              />
               <Card
                 sx={{
                   borderRadius: 4,
@@ -154,7 +187,7 @@ const Dashboard = () => {
                     <a href={store.reserveUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#FFD700', fontWeight: 700 }}>{store.reserveUrl}</a>
                   </Stack>
                   <Stack direction="row" spacing={2}>
-                    <Button variant="contained" color="primary" size="medium" startIcon={<PlayArrowIcon />} sx={{ fontWeight: 900, borderRadius: 2 }} onClick={() => handleStart(store)}>
+                    <Button variant="contained" color="primary" size="medium" startIcon={<PlayArrowIcon />} sx={{ fontWeight: 900, borderRadius: 2 }} onClick={() => runAutomation(store, userSettings[store.id])}>
                       시작
                     </Button>
                     <Button variant="outlined" color="primary" size="medium" startIcon={<StopIcon />} sx={{ fontWeight: 900, borderRadius: 2 }}>
