@@ -4,7 +4,7 @@ import {
   ToggleButton, ToggleButtonGroup, Slider, Alert, Divider
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DatePicker, LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -74,12 +74,21 @@ const Settings = () => {
         const settingsObj: any = {};
         settingsArr.forEach((s: any) => {
           const storeId = s.store?.id || s.storeId || s.id;
-          // 시간 형식에서 초 부분 제거 (예: 14:30:00 -> 14:30)
-          const cleanStartTime = s.startTime ? s.startTime.substring(0, 5) : DEFAULT_START_TIME;
+          // 서버에서 받아올 때는 startTime 필드 사용
+          let startDateTime = null;
+          if (s.startTime) {
+            startDateTime = dayjs(s.startTime);
+          } else if (s.startDateTime) {
+            // 혹시 서버가 startDateTime으로 줄 수도 있으니 호환
+            startDateTime = dayjs(s.startDateTime);
+          } else if (s.visitDate && s.visitTime) {
+            startDateTime = dayjs(`${s.visitDate}T${s.visitTime}`);
+          } else {
+            startDateTime = dayjs();
+          }
           const cleanVisitTime = s.visitTime ? s.visitTime.substring(0, 5) : DEFAULT_VISIT_TIME;
-          
           settingsObj[storeId] = {
-            startTime: cleanStartTime,
+            startDateTime,
             visitDate: s.visitDate ? dayjs(s.visitDate) : DEFAULT_VISIT_DATE,
             visitTime: cleanVisitTime,
           };
@@ -94,7 +103,7 @@ const Settings = () => {
 
   const getStoreSetting = (id: string) => {
     return storeSettings[id] || {
-      startTime: DEFAULT_START_TIME,
+      startDateTime: dayjs(),
       visitDate: DEFAULT_VISIT_DATE,
       visitTime: DEFAULT_VISIT_TIME,
     };
@@ -113,16 +122,15 @@ const Settings = () => {
       const settingsArr = storeList.map(store => ({
         email,
         storeId: store.id,
-        startTime: getStoreSetting(store.id).startTime,
+        // 서버로 보낼 때는 startTime 필드명으로 전달
+        startTime: getStoreSetting(store.id).startDateTime ? getStoreSetting(store.id).startDateTime.format('YYYY-MM-DDTHH:mm') : '',
         visitDate: getStoreSetting(store.id).visitDate.format('YYYY-MM-DD'),
         visitTime: getStoreSetting(store.id).visitTime,
         carrier,
         message,
       }));
-      
       const responses = await Promise.all(settingsArr.map(saveUserStoreSetting));
       if (responses[0]?.carrier) setCarrier(responses[0].carrier);
-      
       setToastMsg('설정이 저장되었습니다!');
       setToastSeverity('success');
       setToastOpen(true);
@@ -425,30 +433,23 @@ const Settings = () => {
                       </Typography>
                       
                       <Stack spacing={3}>
-                        {/* 자동화 시작 시간 - 24시간 전체 (1분 단위) */}
+                        {/* 자동화 시작 시간 - DateTimePicker로 변경 */}
                         <Box>
                           <Typography variant="subtitle2" fontWeight={600} mb={1} color="#f0f6fc">
-                            🚀 자동화 시작 시간 (1분 단위)
+                            🚀 자동화 시작 날짜/시간
                           </Typography>
-                          <FormControl fullWidth>
-                            <Select
-                              value={getStoreSetting(store.id).startTime}
-                              onChange={e => handleStoreChange(store.id, 'startTime', e.target.value)}
-                              MenuProps={{
-                                PaperProps: {
-                                  style: {
-                                    maxHeight: 300,
-                                  },
-                                },
-                              }}
-                            >
-                              {AUTOMATION_TIME_OPTIONS.map(option => (
-                                <MenuItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
+                          <DateTimePicker
+                            label="자동화 시작 날짜/시간"
+                            value={getStoreSetting(store.id).startDateTime}
+                            onChange={date => handleStoreChange(store.id, 'startDateTime', date)}
+                            format="YYYY-MM-DD HH:mm"
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                sx: { '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }
+                              }
+                            }}
+                          />
                         </Box>
 
                         {/* 방문 날짜 */}

@@ -3,7 +3,7 @@ use chromiumoxide::browser::{Browser, BrowserConfig}; // 변경
 use futures::StreamExt; // chromiumoxide 이벤트 처리에 필요할 수 있음
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use chrono::{Local, NaiveTime};
+use chrono::{Local, NaiveTime, NaiveDateTime};
 
 mod automation;
 use automation::{
@@ -417,26 +417,32 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
 
         // 5. 시간 기반 대기 (설정된 시작 시간까지 - 동의합니다 버튼 클릭 전)
         if let Some(start_time_str) = &config.start_time {
-            if let Ok(target_time) = NaiveTime::parse_from_str(start_time_str, "%H:%M:%S") {
-                println!("⏰ 설정된 시작 시간: {}까지 대기합니다.", target_time.format("%H:%M:%S"));
+            // 날짜+시간 전체 비교 (YYYY-MM-DDTHH:mm[:ss] 또는 YYYY-MM-DD HH:mm[:ss])
+            let parse_formats = [
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%dT%H:%M",
+                "%Y-%m-%d %H:%M"
+            ];
+            let mut parsed = None;
+            for fmt in &parse_formats {
+                if let Ok(dt) = NaiveDateTime::parse_from_str(start_time_str, fmt) {
+                    parsed = Some(dt);
+                    break;
+                }
+            }
+            if let Some(target_dt) = parsed {
+                println!("⏰ 설정된 시작 시간: {}까지 대기합니다.", target_dt.format("%Y-%m-%d %H:%M:%S"));
                 loop {
-                    let current_time = Local::now().time();
-                    if current_time >= target_time {
+                    let now = Local::now().naive_local();
+                    if now >= target_dt {
                         println!("⏰ 설정된 시작 시간 {} 도달! 동의합니다 버튼을 클릭합니다.", start_time_str);
                         break;
                     }
-                    tokio::time::sleep(Duration::from_secs(1)).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
-            } else if let Ok(target_time) = NaiveTime::parse_from_str(start_time_str, "%H:%M") {
-                println!("⏰ 설정된 시작 시간: {}까지 대기합니다.", target_time.format("%H:%M:%S"));
-                loop {
-                    let current_time = Local::now().time();
-                    if current_time >= target_time {
-                        println!("⏰ 설정된 시작 시간 {} 도달! 동의합니다 버튼을 클릭합니다.", start_time_str);
-                        break;
-                    }
-                    tokio::time::sleep(Duration::from_secs(1)).await;
-                }
+            } else {
+                println!("⚠️ 시작 시간 파싱 실패: {} (지원 포맷: YYYY-MM-DDTHH:mm[:ss] 또는 YYYY-MM-DD HH:mm[:ss])", start_time_str);
             }
         }
 
