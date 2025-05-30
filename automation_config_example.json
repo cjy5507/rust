@@ -1,0 +1,132 @@
+{
+  "automation_settings": {
+    "description": "롤렉스 자동화 시스템 설정 예시",
+    "version": "2.0.0",
+    "last_updated": "2025-05-30"
+  },
+  "user_config": {
+    "email": "user@example.com",
+    "carrier": "SKT",
+    "message": "롤렉스 시계 구매 문의드립니다"
+  },
+  "stores": [
+    {
+      "id": "rolex_gangnam",
+      "name": "롤렉스 강남점",
+      "authUrl": "https://www.rolex.com/ko/store-locator/rolex-gangnam",
+      "reserveUrl": "https://booking.rolex.com/gangnam/reservation",
+      "automation_config": {
+        "startTime": "10:00",
+        "visitDate": "2025-06-01",
+        "visitTime": "14:00",
+        "priority": "high",
+        "notes": "데이토나 관심, 오후 2시 방문 희망"
+      }
+    },
+    {
+      "id": "rolex_lotte",
+      "name": "롤렉스 롯데월드타워점",
+      "authUrl": "https://www.rolex.com/ko/store-locator/rolex-lotte-world-tower",
+      "reserveUrl": "https://booking.rolex.com/lotte/reservation",
+      "automation_config": {
+        "startTime": "10:00",
+        "visitDate": "2025-06-01", 
+        "visitTime": "15:30",
+        "priority": "medium",
+        "notes": "서브마리너 관심, 오후 3시 30분 방문"
+      }
+    },
+    {
+      "id": "rolex_hyundai",
+      "name": "롤렉스 현대백화점본점",
+      "authUrl": "https://www.rolex.com/ko/store-locator/rolex-hyundai-main",
+      "reserveUrl": "https://booking.rolex.com/hyundai/reservation",
+      "automation_config": {
+        "startTime": "10:00",
+        "visitDate": "2025-06-02",
+        "visitTime": "11:00",
+        "priority": "low",
+        "notes": "GMT-Master II 관심, 오전 11시 방문"
+      }
+    }
+  ],
+  "timing_strategy": {
+    "description": "자동화 타이밍 전략",
+    "recommended_times": [
+      {
+        "time": "10:00",
+        "reason": "매장 오픈 시간, 예약 가능성 높음",
+        "competition_level": "high"
+      },
+      {
+        "time": "14:00", 
+        "reason": "점심시간 이후, 상담 가능",
+        "competition_level": "medium"
+      },
+      {
+        "time": "16:00",
+        "reason": "오후 시간, 여유로운 상담",
+        "competition_level": "low"
+      }
+    ],
+    "best_practices": [
+      "여러 매장 동시 실행으로 성공률 향상",
+      "정확한 시간(초 단위) 설정 중요",
+      "안정적인 네트워크 환경 필수",
+      "모바일 PASS 앱 미리 준비",
+      "브라우저 캐시 정리 후 실행"
+    ]
+  },
+  "error_handling": {
+    "common_issues": [
+      {
+        "issue": "PASS 인증 팝업이 열리지 않음",
+        "solution": "브라우저 팝업 차단 해제, 새로고침 후 재시도"
+      },
+      {
+        "issue": "네트워크 타임아웃",
+        "solution": "인터넷 연결 확인, 자동 재시도 기능 활용"
+      },
+      {
+        "issue": "예약 시간이 없음",
+        "solution": "유사한 시간대 자동 선택 기능 활용"
+      },
+      {
+        "issue": "매장별 URL 변경",
+        "solution": "설정에서 최신 URL로 업데이트 필요"
+      }
+    ],
+    "retry_strategy": {
+      "max_retries": 3,
+      "retry_delay": "지수 백오프 (1초, 2초, 3초)",
+      "timeout_seconds": 30
+    }
+  },
+  "performance_optimization": {
+    "browser_settings": {
+      "disable_images": false,
+      "disable_javascript": false,
+      "disable_css": false,
+      "enable_popup": true,
+      "window_size": "1200x800"
+    },
+    "network_settings": {
+      "timeout": 30000,
+      "retry_count": 3,
+      "keep_alive": true
+    }
+  },
+  "security": {
+    "data_protection": [
+      "비밀번호 로컬 암호화 저장",
+      "개인정보 네트워크 전송 최소화", 
+      "브라우저 수동 제어 항상 가능",
+      "자동화 로그 개인정보 제외"
+    ],
+    "privacy": [
+      "사용자 동의 없는 데이터 수집 금지",
+      "브라우저 쿠키 사용자 제어",
+      "자동화 과정 투명성 보장"
+    ]
+  }
+}

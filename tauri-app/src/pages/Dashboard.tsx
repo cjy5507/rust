@@ -91,22 +91,7 @@ const Dashboard = () => {
     debugEnvironment();
     interceptApiCalls();
     
-    // API URL 확인 로그 - 더 상세하게
-    const currentMode = import.meta.env.MODE;
-    const currentAPI = import.meta.env.VITE_API_BASE_URL;
-    const isDev = import.meta.env.DEV;
-    const isProd = import.meta.env.PROD;
-    
-    console.log('🌐 Environment Details:');
-    console.log('- MODE:', currentMode);
-    console.log('- DEV:', isDev);
-    console.log('- PROD:', isProd);
-    console.log('- API URL:', currentAPI);
-    console.log('- All env vars:', import.meta.env);
-    
-    addLog(`환경: ${currentMode} | DEV:${isDev} | PROD:${isProd}`, 'info');
-    addLog(`API URL: ${currentAPI}`, 'info');
-    
+
     // 데이터 초기화
     const email = localStorage.getItem('email') || '';
     setEmail(email);
@@ -131,14 +116,12 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
 
     if (email) {
-      addLog('사용자 설정 로드 시작', 'info');
       fetchUserStoreSettings(email).then(data => {
         const settingsMap: any = {};
         (data.settings || []).forEach((s: any) => {
           settingsMap[s.storeId || s.store?.id] = s;
         });
         setUserSettings(settingsMap);
-        addLog('사용자 설정 로드 완료', 'success');
       }).catch(err => {
         addLog(`사용자 설정 로드 실패: ${err.message}`, 'error');
       });
@@ -249,7 +232,7 @@ const Dashboard = () => {
       const failCount = results.length - successCount;
       
       addLog(`일괄 자동화 완료 - 성공: ${successCount}개, 실패: ${failCount}개`, 'success');
-      showSuccess(`🚀 병렬 자동화 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n모든 매장의 브라우저가 동시에 열렸습니다!`);
+      showSuccess(`🚀 자동화 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n모든 매장의 브라우저가 동시에 열렸습니다!`);
       
     } catch (error) {
       console.error('❌ 다중 자동화 실행 실패:', error);

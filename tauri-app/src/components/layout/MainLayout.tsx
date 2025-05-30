@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, Box, Button, Divider, ListItemIcon } from "@mui/material";
-import { Menu as MenuIcon, Close as CloseIcon, Dashboard as DashboardIcon, Settings as SettingsIcon, Logout as LogoutIcon, AccessTime as AccessTimeIcon, Watch as WatchIcon } from "@mui/icons-material";
+import { Menu as MenuIcon, Close as CloseIcon, Dashboard as DashboardIcon, Settings as SettingsIcon, Logout as LogoutIcon, Watch as WatchIcon } from "@mui/icons-material";
 
 const menu = [
   { label: "대시보드", path: "/dashboard", icon: <DashboardIcon /> },
@@ -93,32 +93,7 @@ export default function MainLayout({ children, onLogout }: MainLayoutProps) {
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            {/* 시계 표시 개선 */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              background: 'rgba(15, 23, 42, 0.3)',
-              border: '1px solid rgba(71, 85, 105, 0.3)'
-            }}>
-              <AccessTimeIcon sx={{ fontSize: 18, color: '#c9b037' }} />
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#e2e8f0',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  fontFamily: 'monospace'
-                }}
-              >
-                {clock}
-              </Typography>
-            </Box>
-            
-            <Button 
+            <Button
               variant="outlined" 
               size="small"
               startIcon={<LogoutIcon />}
