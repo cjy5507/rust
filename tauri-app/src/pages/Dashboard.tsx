@@ -13,13 +13,14 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Watch as WatchIcon } from '@mui/icons-material';
 import InfoIcon from '@mui/icons-material/Info';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchStores, fetchUserStoreSettings } from '../../api/rolex';
 import { invoke } from '@tauri-apps/api/core';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/layout/Toast';
 import ConfirmDialog from '../components/layout/ConfirmDialog';
+import { debugEnvironment, interceptApiCalls } from '../utils/environment-debug';
 
 // 상태별 색상과 아이콘 정의 (롤렉스 테마)
 const statusConfig = {
@@ -43,9 +44,9 @@ const Dashboard = () => {
   
   // 동적 로그
   const [logs, setLogs] = useState([
-    { id: 1, text: '2025-05-30 06:53 시스템 초기화 완료', type: 'success', time: '06:53' },
-    { id: 2, text: '2025-05-30 06:53 매장 목록 로드 완료', type: 'info', time: '06:53' },
-    { id: 3, text: '2025-05-30 06:53 사용자 설정 로드 완료', type: 'info', time: '06:53' },
+    { id: 'init-1', text: '2025-05-30 06:53 시스템 초기화 완료', type: 'success', time: '06:53' },
+    { id: 'init-2', text: '2025-05-30 06:53 매장 목록 로드 완료', type: 'info', time: '06:53' },
+    { id: 'init-3', text: '2025-05-30 06:53 사용자 설정 로드 완료', type: 'info', time: '06:53' },
   ]);
   
   // 토스트 훅
@@ -56,7 +57,7 @@ const Dashboard = () => {
     const now = new Date();
     const time = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
     const newLog = {
-      id: Date.now(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // 고유한 ID 생성
       text: `${now.toLocaleDateString('ko-KR')} ${time} ${text}`,
       type,
       time
@@ -86,6 +87,10 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    // 환경변수 디버깅
+    debugEnvironment();
+    interceptApiCalls();
+    
     // API URL 확인 로그 - 더 상세하게
     const currentMode = import.meta.env.MODE;
     const currentAPI = import.meta.env.VITE_API_BASE_URL;

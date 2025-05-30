@@ -19,7 +19,6 @@ function App() {
   console.log('- Mode:', import.meta.env.MODE);
   console.log('- DEV:', import.meta.env.DEV);
   console.log('- PROD:', import.meta.env.PROD);
-  console.log('- API Base URL:', import.meta.env.VITE_API_BASE_URL);
   console.log('- Base URL:', import.meta.env.BASE_URL);
 
   // 로그인 성공 시 호출될 콜백

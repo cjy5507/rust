@@ -1,8 +1,20 @@
 // 환경 변수를 통한 API 베이스 URL 설정
-//const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://bcra.store/api/rolex';
-const API_BASE = 'http://bcra.store/api/rolex'
-console.log('🌐 API Base URL:', API_BASE);
-console.log('🔧 Environment:', import.meta.env.MODE);
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://bcra.store/api/rolex';
+
+// 환경변수 디버깅 정보 출력
+console.log('🌐 Environment Debug Info:');
+console.log('  API_BASE:', API_BASE);
+console.log('  VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('  MODE:', import.meta.env.MODE);
+console.log('  DEV:', import.meta.env.DEV);
+console.log('  PROD:', import.meta.env.PROD);
+console.log('  All env vars:', import.meta.env);
+
+// Tauri 환경에서는 alert로도 확인
+if (typeof window !== 'undefined' && window.__TAURI__) {
+  console.log('🔍 Running in Tauri environment');
+  console.log(`📡 Will use API: ${API_BASE}`);
+}
 
 // 1. 로그인
 export async function login(email: string, password: string, clientTime?: string | null) {

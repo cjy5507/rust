@@ -1,0 +1,13 @@
+{
+  "name": "rolex-automation",
+  "version": "1.0.0",
+  "description": "Rolex 예약 자동화",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.40.0",
+    "dayjs": "^1.11.10"
+  }
+}

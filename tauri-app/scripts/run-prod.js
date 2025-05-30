@@ -1,66 +1,73 @@
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync, spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('🚀 Starting production build and run...');
+console.log('📍 Working directory:', process.cwd());
 
-// 1. 프로덕션 빌드
-console.log('📦 Building for production...');
-execSync('npm run build:prod', { stdio: 'inherit' });
+// 환경 변수 설정
+process.env.NODE_ENV = 'production';
 
-// 2. Tauri 설정을 프로덕션 모드로 임시 변경
-const configPath = path.join(__dirname, '../src-tauri/tauri.conf.json');
-const originalConfig = fs.readFileSync(configPath, 'utf8');
-
-const prodConfig = {
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "ROLEX Automation",
-  "version": "0.1.0",
-  "identifier": "com.tauri.rolex-automation",
-  "build": {
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "ROLEX 자동화 시스템",
-        "width": 1200,
-        "height": 800,
-        "minWidth": 1000,
-        "minHeight": 700,
-        "center": true,
-        "resizable": true
-      }
-    ],
-    "security": {
-      "csp": null
-    }
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
-  }
-};
-
-// 설정 파일 임시 변경
-fs.writeFileSync(configPath, JSON.stringify(prodConfig, null, 2));
-
-console.log('⚙️ Running Tauri in production mode...');
+console.log('🔧 Environment variables:');
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('  VITE_API_BASE_URL:', process.env.VITE_API_BASE_URL || 'from .env.production');
 
 try {
-  // 3. Tauri 실행
-  execSync('tauri dev', { stdio: 'inherit' });
+  // 1. 프로덕션 빌드
+  console.log('\n📦 Building for production...');
+  execSync('npm run build:prod', { 
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'production' }
+  });
+
+  // 2. 빌드 결과 확인
+  const distPath = path.join(__dirname, '..', 'dist');
+  if (fs.existsSync(distPath)) {
+    console.log('✅ Build successful! Dist folder created.');
+  } else {
+    throw new Error('❌ Build failed! Dist folder not found.');
+  }
+
+  // 3. Tauri 빌드 및 실행
+  console.log('\n⚙️ Building and running Tauri application...');
+  
+  // 디버그 빌드로 빠르게 테스트
+  execSync('tauri build --debug', { 
+    stdio: 'inherit',
+    cwd: path.join(__dirname, '../'),
+    env: { ...process.env, NODE_ENV: 'production' }
+  });
+
+  // 4. 실행 파일 경로 확인 및 실행
+  const executablePath = path.join(__dirname, '../src-tauri/target/debug/tauri-app');
+  
+  if (fs.existsSync(executablePath)) {
+    console.log('\n🎉 Starting application...');
+    console.log('📂 Executable path:', executablePath);
+    
+    // 새 프로세스로 애플리케이션 실행
+    const child = spawn(executablePath, [], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    
+    child.unref();
+    console.log('✅ Application started successfully!');
+    process.exit(0);
+  } else {
+    throw new Error(`❌ Executable not found at: ${executablePath}`);
+  }
+
 } catch (error) {
-  console.error('Error running Tauri:', error);
-} finally {
-  // 4. 원본 설정 복원
-  console.log('🔄 Restoring original config...');
-  fs.writeFileSync(configPath, originalConfig);
+  console.error('\n❌ Error during production build:', error.message);
+  console.error('\n🔍 Troubleshooting steps:');
+  console.error('  1. Check if all dependencies are installed: npm install');
+  console.error('  2. Verify environment variables in .env.production');
+  console.error('  3. Check Tauri configuration in src-tauri/tauri.conf.json');
+  console.error('  4. Ensure Rust and Tauri CLI are properly installed');
+  process.exit(1);
 }

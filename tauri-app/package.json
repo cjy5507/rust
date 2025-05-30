@@ -1,29 +1,25 @@
 {
-  "name": "tauri-app",
+  "name": "rolex-app",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode development",
+    "prod": "vite --mode production",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development",
     "build:prod": "vite build --mode production",
-    "preview": "vite preview",
-    "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "start:dev": "tauri dev",
-    "start:prod": "node scripts/run-prod.js",
-    "start:prod:simple": "npm run build:prod && cross-env NODE_ENV=production tauri build --debug && .\\src-tauri\\target\\debug\\tauri-app.exe",
-    "build:prod:run": "npm run build:prod && tauri build",
-    "start" : "npm run build:prod:run"
+    "start:dev": "npm run tauri:dev",
+    "start:prod": "npm run build:prod && tauri build",
+    "start": "npm run start:dev",
+    "clean": "rimraf dist src-tauri/target",
+    "check-env": "node scripts/check-env.js"
   },
   "dependencies": {
-    "@emotion/react": "^11.11.1",
-    "@emotion/styled": "^11.11.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "framer-motion": "^10.16.4",
-    "playwright": "^1.52.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.6.1"
@@ -33,10 +29,8 @@
     "@types/react": "^18.3.22",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.21",
     "cross-env": "^7.0.3",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.7",
+    "rimraf": "^5.0.0",
     "typescript": "~5.6.2",
     "vite": "^6.0.3"
   }
