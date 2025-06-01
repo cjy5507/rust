@@ -42,6 +42,8 @@ pub struct StoreConfig {
     visit_time: Option<String>,
     carrier: String,
     email: String,
+    #[serde(rename = "clientTime")]
+    client_time: Option<String>, // 클라이언트 현재 시간 추가
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -159,11 +161,11 @@ async fn run_multiple_automation(
         &format!("{} 개 매장", store_configs.len()),
     );
 
-    // 매장들을 순차적으로 빠르게 시작 (병렬 실행 충돌 방지)
+    // 매장들을 순차적으로 안전한 간격을 두고 시작 (병렬 실행 충돌 방지)
     let mut tasks = Vec::new();
     for (index, store_config) in store_configs.into_iter().enumerate() {
-        // 각 매장마다 0.5초씩 간격을 두고 시작
-        tokio::time::sleep(Duration::from_millis(500 * index as u64)).await;
+        // 각 매장마다 2초씩 간격을 두고 시작 (브라우저 안정성 확보)
+        tokio::time::sleep(Duration::from_millis(2000 * index as u64)).await;
         
         let task = tokio::spawn(async move { 
             run_single_automation(store_config).await 
@@ -267,7 +269,7 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
     );
     let user_data_dir = std::env::temp_dir().join(format!("chromium-{}", unique_id));
     
-    // Chrome args 설정 (병렬 실행 지원 + 빠른 클릭)
+    // Chrome args 설정 (병렬 실행 지원 + 리소스 절약)
     let chrome_args_str: Vec<String> = vec![
         "--no-first-run".to_string(),
         "--disable-default-apps".to_string(),
@@ -282,6 +284,12 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
         "--disable-features=TranslateUI".to_string(),
         "--disable-logging".to_string(), // 로그 줄이기
         "--silent".to_string(),
+        "--disable-web-security".to_string(), // 보안 기능 비활성화
+        "--disable-features=VizDisplayCompositor".to_string(), // GPU 기능 최소화
+        "--disable-ipc-flooding-protection".to_string(), // IPC 보호 비활성화
+        "--memory-pressure-off".to_string(), // 메모리 압박 해제
+        "--max_old_space_size=4096".to_string(), // 메모리 제한 증가
+        "--no-sandbox".to_string(), // 샌드박스 비활성화
         format!("--user-data-dir={}", user_data_dir.to_string_lossy()), // 고유 디렉토리
     ];
     let chrome_args_ref: Vec<&str> = chrome_args_str.iter().map(AsRef::as_ref).collect();
@@ -316,9 +324,9 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
         }
     });
 
-    // 브라우저 빠른 안정화
+    // 브라우저 안정화 (병렬 실행 시 더 긴 대기)
     println!("⏳ 브라우저 안정화 중...");
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    tokio::time::sleep(Duration::from_secs(3)).await;
     println!("✅ {} 브라우저 시작 완료", config.store_name);
 
     // 새 페이지 생성 (더 안전한 방식)
@@ -329,7 +337,7 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
     ).await {
         Ok(Ok(p)) => {
             println!("✅ 새 페이지 생성 완료");
-            tokio::time::sleep(Duration::from_secs(1)).await; // 페이지 안정화 단축
+            tokio::time::sleep(Duration::from_secs(2)).await; // 페이지 안정화 시간 증가
             p
         }
         Ok(Err(e)) => {
@@ -359,7 +367,7 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
     ).await {
         Ok(Ok(_)) => {
             println!("✅ 인증 URL 로딩 완료");
-            tokio::time::sleep(Duration::from_secs(2)).await; // 페이지 로딩 대기 단축
+            tokio::time::sleep(Duration::from_secs(3)).await; // 페이지 로딩 대기 시간 증가
         }
         Ok(Err(e)) => {
             println!("❌ URL 이동 실패: {:?}", e);
@@ -387,7 +395,7 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
         if let Err(e) = handle_initial_popup(&page).await {
             println!("⚠️ 쿠키 팝업 처리 실패: {}", e);
         }
-        tokio::time::sleep(Duration::from_millis(500)).await; // 빠른 진행
+        tokio::time::sleep(Duration::from_millis(1000)).await; // 단계간 대기 시간 증가
 
         // 3. 방문 예약하기 버튼 클릭
         if let Err(e) = click_visit_reservation_button(&page).await {
@@ -417,41 +425,87 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
 
         // 5. 시간 기반 대기 (설정된 시작 시간까지 - 동의합니다 버튼 클릭 전)
         if let Some(start_time_str) = &config.start_time {
-            // 날짜+시간 전체 비교 (YYYY-MM-DDTHH:mm[:ss] 또는 YYYY-MM-DD HH:mm[:ss])
-            let parse_formats = [
-                "%Y-%m-%dT%H:%M:%S",
-                "%Y-%m-%d %H:%M:%S",
-                "%Y-%m-%dT%H:%M",
-                "%Y-%m-%d %H:%M"
-            ];
-            let mut parsed = None;
-            for fmt in &parse_formats {
-                if let Ok(dt) = NaiveDateTime::parse_from_str(start_time_str, fmt) {
-                    parsed = Some(dt);
-                    break;
-                }
-            }
-            if let Some(target_dt) = parsed {
-                println!("⏰ 설정된 시작 시간: {}까지 대기합니다.", target_dt.format("%Y-%m-%d %H:%M:%S"));
-                loop {
-                    let now = Local::now().naive_local();
-                    if now >= target_dt {
-                        println!("⏰ 설정된 시작 시간 {} 도달! 동의합니다 버튼을 클릭합니다.", start_time_str);
+            println!("⏰ 시작 시간 확인: {}", start_time_str);
+            
+            // 클라이언트 시간과 비교하여 대기
+            if let Some(client_time_str) = &config.client_time {
+                println!("📱 클라이언트 현재 시간: {}", client_time_str);
+                
+                // 클라이언트 현재 시간 파싱 (ISO 8601 형식)
+                let client_current_time = match chrono::DateTime::parse_from_rfc3339(client_time_str) {
+                    Ok(dt) => dt.naive_local(),
+                    Err(e) => {
+                        println!("⚠️ 클라이언트 시간 파싱 실패: {} - 서버 시간 사용", e);
+                        Local::now().naive_local()
+                    }
+                };
+                
+                // 시작 시간 파싱 (여러 형식 지원)
+                let parse_formats = [
+                    "%Y-%m-%dT%H:%M:%S",
+                    "%Y-%m-%d %H:%M:%S", 
+                    "%Y-%m-%dT%H:%M",
+                    "%Y-%m-%d %H:%M"
+                ];
+                
+                let mut target_datetime = None;
+                for fmt in &parse_formats {
+                    if let Ok(dt) = NaiveDateTime::parse_from_str(start_time_str, fmt) {
+                        target_datetime = Some(dt);
+                        println!("✅ 시작 시간 파싱 성공: {} → {}", start_time_str, dt.format("%Y-%m-%d %H:%M:%S"));
                         break;
                     }
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                }
+                
+                if let Some(target_dt) = target_datetime {
+                    println!("⏰ 설정된 시작 시간: {}까지 대기합니다.", target_dt.format("%Y-%m-%d %H:%M:%S"));
+                    println!("📅 현재 클라이언트 시간: {}", client_current_time.format("%Y-%m-%d %H:%M:%S"));
+                    
+                    // 시작 시간이 아직 도달하지 않았으면 대기
+                    if client_current_time < target_dt {
+                        let wait_duration = target_dt.signed_duration_since(client_current_time);
+                        if wait_duration.num_seconds() > 0 && wait_duration.num_seconds() < 86400 { // 24시간 이내만 대기
+                            println!("⏱️ {}초 대기 중... ({}시간 {}분)", 
+                                wait_duration.num_seconds(),
+                                wait_duration.num_hours(),
+                                wait_duration.num_minutes() % 60
+                            );
+                            
+                            // 1초씩 대기하며 실시간 업데이트
+                            let mut remaining = wait_duration.num_seconds();
+                            while remaining > 0 {
+                                if remaining % 60 == 0 || remaining <= 10 {
+                                    let hours = remaining / 3600;
+                                    let minutes = (remaining % 3600) / 60;
+                                    let secs = remaining % 60;
+                                    println!("⏰ 동의합니다 버튼 클릭까지 {}시간 {}분 {}초 남음...", hours, minutes, secs);
+                                }
+                                tokio::time::sleep(Duration::from_secs(1)).await;
+                                remaining -= 1;
+                            }
+                        } else if wait_duration.num_seconds() >= 86400 {
+                            println!("⚠️ 시작 시간이 24시간 이상 미래입니다. 즉시 시작합니다.");
+                        }
+                    }
+                    
+                    println!("🚀 설정된 시작 시간 도달! 동의합니다 버튼을 클릭합니다.");
+                } else {
+                    println!("⚠️ 시간 파싱 실패: {} (지원 포맷: YYYY-MM-DDTHH:mm[:ss] 또는 YYYY-MM-DD HH:mm[:ss])", start_time_str);
+                    println!("📋 파싱 실패로 인해 즉시 진행합니다.");
                 }
             } else {
-                println!("⚠️ 시작 시간 파싱 실패: {} (지원 포맷: YYYY-MM-DDTHH:mm[:ss] 또는 YYYY-MM-DD HH:mm[:ss])", start_time_str);
+                println!("⚠️ 클라이언트 시간이 제공되지 않음 - 즉시 진행합니다.");
             }
+        } else {
+            println!("⚠️ 시작 시간이 설정되지 않음 - 즉시 진행합니다.");
         }
 
-        // 6. 동의합니다 버튼 클릭 (2단계 - 시작시간에 맞춰 실행)
+        // 6. 동의합니다 버튼 클릭 (설정 시간에 맞춰 실행)
         if let Err(e) = click_agree_button(&page).await {
             println!("⚠️ 동의 버튼 클릭 실패: {}", e);
         }
 
-        // 7. 방문 날짜 선택 (3단계)
+        // 6. 방문 날짜 선택 (3단계)
         if let Some(visit_date) = &config.visit_date {
             if let Err(e) = select_visit_date(&page, visit_date).await {
                 println!("⚠️ 방문 날짜 선택 실패: {}", e);
@@ -466,19 +520,19 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
             }
         }
 
-        // 8. 방문 시간 선택 (3단계 계속)
+        // 7. 방문 시간 선택 (3단계 계속)
         if let Some(visit_time) = &config.visit_time {
             if let Err(e) = select_visit_time(&page, visit_time).await {
                 println!("⚠️ 방문 시간 선택 실패: {}", e);
             }
         }
 
-        // 9. 다음 버튼 클릭 (3단계에서 PASS 인증으로)
+        // 8. 다음 버튼 클릭 (3단계에서 PASS 인증으로)
         if let Err(e) = click_next_button(&page).await {
             println!("⚠️ 다음 버튼 클릭 실패: {}", e);
         }
 
-        // 10. PASS 인증 처리 (사용자 개입 대기)
+        // 9. PASS 인증 처리 (사용자 개입 대기)
         if let Err(e) = handle_pass_authentication(&page, &config.carrier).await {
             println!("❌ PASS 인증 실패: {}", e);
             if main_attempt == 3 {
@@ -491,7 +545,7 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
             continue;
         }
 
-        // 11. 이메일 입력 및 최종 예약 (4단계)
+        // 10. 이메일 입력 및 최종 예약 (4단계)
         if let Err(e) = submit_final_reservation(&page, &config.email).await {
             println!("❌ 최종 예약 제출 실패: {}", e);
             if main_attempt == 3 {
@@ -504,7 +558,7 @@ async fn run_rolex_automation(config: &StoreConfig) -> Result<String, String> {
             continue;
         }
 
-        // 12. 성공 페이지 확인
+        // 11. 성공 페이지 확인
         match check_success_page(&page).await {
             Ok(true) => {
                 println!("🎉 {} 자동화가 성공적으로 완료되었습니다!", config.store_name);

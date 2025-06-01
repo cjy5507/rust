@@ -45,10 +45,22 @@ export async function fetchStores() {
 // 3. 유저별 매장 설정 조회
 export async function fetchUserStoreSettings(email: string) {
   console.log('⚙️ Fetching user settings from:', `${API_BASE}/user-store-settings`);
+  console.log('📧 요청할 이메일:', email);
   
-  const res = await fetch(`${API_BASE}/user-store-settings?email=${encodeURIComponent(email)}`, { credentials: 'include' });
-  if (!res.ok) throw new Error('유저별 매장 설정 조회 실패');
+  const url = `${API_BASE}/user-store-settings?email=${encodeURIComponent(email)}`;
+  console.log('🔗 최종 요청 URL:', url);
+  
+  const res = await fetch(url, { credentials: 'include' });
+  console.log('📡 응답 상태:', res.status, res.statusText);
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('❌ API 오류:', errorText);
+    throw new Error('유저별 매장 설정 조회 실패: ' + errorText);
+  }
+  
   const data = await res.json();
+  console.log('✅ API 응답 데이터:', data);
   // data: { carrier, settings }
   return data;
 }
@@ -56,13 +68,27 @@ export async function fetchUserStoreSettings(email: string) {
 // 4. 유저별 매장 설정 저장/수정
 export async function saveUserStoreSetting(setting: any) {
   console.log('💾 Saving user settings to:', `${API_BASE}/user-store-settings`);
+  console.log('📤 저장할 설정 데이터:', setting);
+  
+  const requestBody = JSON.stringify(setting);
+  console.log('📦 요청 본문:', requestBody);
   
   const res = await fetch(`${API_BASE}/user-store-settings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(setting),
+    body: requestBody,
     credentials: 'include',
   });
-  if (!res.ok) throw new Error('유저별 매장 설정 저장 실패');
-  return res.json();
+  
+  console.log('📡 저장 응답 상태:', res.status, res.statusText);
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('❌ 저장 API 오류:', errorText);
+    throw new Error('유저별 매장 설정 저장 실패: ' + errorText);
+  }
+  
+  const result = await res.json();
+  console.log('✅ 저장 API 응답:', result);
+  return result;
 }

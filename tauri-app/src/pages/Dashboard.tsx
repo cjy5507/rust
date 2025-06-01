@@ -65,8 +65,8 @@ const Dashboard = () => {
     setLogs(prev => [newLog, ...prev.slice(0, 19)]); // 최대 20개 로그 유지
   };
 
-  // 실시간 시계 상태
   const [clock, setClock] = useState<string>('');
+  const [autoStartTimers, setAutoStartTimers] = useState<Record<string, NodeJS.Timeout>>({});
 
   useEffect(() => {
     // 시계 초기화
@@ -86,6 +86,130 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // 자동 시작 시간 체크 함수 (강화된 디버깅 포함)
+  const checkAutoStartTime = (store: any, setting: any) => {
+    // startTime 필드 먼저 확인 (서버에서 주는 실제 필드명)
+    if (!setting?.startTime && !setting?.startDateTime) {
+      // console.log(`${store.name}: 시작 시간 설정 없음 (startTime, startDateTime 모두 없음)`);
+      return;
+    }
+    
+    const now = new Date();
+    
+    // startTime을 Date 객체로 변환 (여러 형식 지원)
+    let startTime: Date;
+    
+    // 1순위: startTime 필드 (서버에서 주는 실제 데이터)
+    if (setting.startTime) {
+      if (typeof setting.startTime === 'string') {
+        // DB 형식 1순위: "YYYY-MM-DD HH:mm" (초 없음, 공백 구분)
+        if (setting.startTime.includes(' ') && setting.startTime.length === 16) {
+          // "2025-05-31 14:37" 형식
+          startTime = new Date(setting.startTime + ':00'); // 초 추가해서 파싱
+        }
+        // DB 형식 2순위: "YYYY-MM-DD HH:mm:ss" (초 포함, 공백 구분)
+        else if (setting.startTime.includes(' ') && setting.startTime.length === 19) {
+          // "2025-05-31 14:37:00" 형식
+          startTime = new Date(setting.startTime);
+        }
+        // ISO 형식: "YYYY-MM-DDTHH:mm:ss" (T 구분)
+        else if (setting.startTime.includes('T')) {
+          startTime = new Date(setting.startTime);
+        } else {
+          // 기타 형식
+          startTime = new Date(setting.startTime);
+        }
+      } else if (setting.startTime instanceof Date) {
+        startTime = setting.startTime;
+      } else {
+        startTime = new Date(setting.startTime);
+      }
+    }
+    // 2순위: startDateTime 필드 (호환성)
+    else if (setting.startDateTime) {
+      if (setting.startDateTime._d) {
+        // dayjs 객체인 경우
+        startTime = new Date(setting.startDateTime._d);
+      } else if (typeof setting.startDateTime === 'string') {
+        // 문자열인 경우
+        startTime = new Date(setting.startDateTime);
+      } else if (setting.startDateTime instanceof Date) {
+        // 이미 Date 객체인 경우
+        startTime = setting.startDateTime;
+      } else {
+        // dayjs 객체의 경우 toDate() 사용
+        startTime = setting.startDateTime.toDate ? setting.startDateTime.toDate() : new Date(setting.startDateTime);
+      }
+    } else {
+      return;
+    }
+    
+    // 시간 유효성 검사
+    if (isNaN(startTime.getTime())) {
+      console.warn(`${store.name}: 잘못된 시작 시간 형식:`, setting.startTime || setting.startDateTime);
+      return;
+    }
+    
+    const nowStr = now.toLocaleString('ko-KR', { hour12: false });
+    const startTimeStr = startTime.toLocaleString('ko-KR', { hour12: false });
+    const timeDiff = startTime.getTime() - now.getTime();
+    
+    // 디버깅 로그 (매분마다 또는 5초 남았을 때만)
+    const remainingSeconds = Math.floor(timeDiff / 1000);
+    if (remainingSeconds === 300 || remainingSeconds === 60 || remainingSeconds === 10 || (remainingSeconds > 0 && remainingSeconds <= 5)) {
+      console.log(`🕐 ${store.name} 시간 체크:
+        현재 시간: ${nowStr}
+        시작 시간: ${startTimeStr}
+        남은 시간: ${remainingSeconds}초 (${Math.floor(remainingSeconds/60)}분 ${remainingSeconds%60}초)
+        상태: ${storeStatuses[store.id]}`);
+    }
+    
+    // 현재 시간이 시작 시간을 지났고, 상태가 '대기중'인 경우에만 자동 시작
+    if (now >= startTime && storeStatuses[store.id] === '대기중') {
+      console.log(`🚀 ${store.name} 자동 시작 조건 만족:
+        현재: ${nowStr} >= 시작: ${startTimeStr}
+        상태: ${storeStatuses[store.id]} → 자동화 실행`);
+      
+      addLog(`${store.name} 자동 시작 시간 도달 - 자동화 실행`, 'info');
+      
+      // 상태를 먼저 변경하여 중복 실행 방지
+      updateStoreStatus(store.id, '실행중');
+      
+      // 자동화 실행
+      runSingleAutomation(store, setting, true); // 자동 실행 표시
+    } else if (timeDiff > 0 && storeStatuses[store.id] === '대기중') {
+      // 아직 시간이 안 됨 - 아무것도 하지 않음 (정상)
+    }
+  };
+
+  // 자동 시작 타이머 설정
+  useEffect(() => {
+    // 기존 타이머들 정리
+    Object.values(autoStartTimers).forEach(timer => clearInterval(timer));
+    setAutoStartTimers({});
+
+    const newTimers: Record<string, NodeJS.Timeout> = {};
+
+    stores.forEach(store => {
+      const setting = userSettings[store.id];
+      // startTime 또는 startDateTime 필드가 있으면 타이머 설정
+      if (setting?.startTime || setting?.startDateTime) {
+        // 1초마다 시간 체크
+        const timer = setInterval(() => {
+          checkAutoStartTime(store, setting);
+        }, 1000);
+        newTimers[store.id] = timer;
+      }
+    });
+
+    setAutoStartTimers(newTimers);
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => {
+      Object.values(newTimers).forEach(timer => clearInterval(timer));
+    };
+  }, [stores, userSettings, storeStatuses]);
+
   useEffect(() => {
     // 환경변수 디버깅
     debugEnvironment();
@@ -94,6 +218,8 @@ const Dashboard = () => {
 
     // 데이터 초기화
     const email = localStorage.getItem('email') || '';
+    console.log('📧 Dashboard에서 로드한 이메일:', email);
+    console.log('📧 localStorage 전체:', localStorage);
     setEmail(email);
     
     addLog('매장 목록 로드 시작', 'info');
@@ -116,15 +242,45 @@ const Dashboard = () => {
       .finally(() => setLoading(false));
 
     if (email) {
+      console.log('📧 Dashboard에서 사용자 설정 로드 시작, email:', email);
       fetchUserStoreSettings(email).then(data => {
+        console.log('📥 Dashboard에서 서버로부터 받은 원본 데이터:', data);
+        console.log('📋 받은 설정 배열:', data.settings);
+        
         const settingsMap: any = {};
         (data.settings || []).forEach((s: any) => {
-          settingsMap[s.storeId || s.store?.id] = s;
+          const storeId = s.storeId || s.store?.id;
+          console.log('🏪 Dashboard에서 매장 설정 처리:', {
+            storeId: storeId,
+            원본_서버_데이터: s,
+            startTime_필드: s.startTime,
+            startDateTime_필드: s.startDateTime,
+            visitDate: s.visitDate,
+            visitTime: s.visitTime
+          });
+          
+          // 서버에서 받은 원본 데이터를 그대로 저장 (변환하지 않음)
+          settingsMap[storeId] = {
+            startTime: s.startTime, // 서버에서 받은 원본 startTime
+            startDateTime: s.startDateTime, // 호환성용
+            visitDate: s.visitDate,
+            visitTime: s.visitTime,
+            // 추가 필드들도 보존
+            ...s
+          };
+          
+          console.log(`📋 ${storeId} 최종 매핑된 설정:`, settingsMap[storeId]);
         });
+        
+        console.log('🗂️ Dashboard 최종 settingsMap:', settingsMap);
         setUserSettings(settingsMap);
+        console.log('✅ Dashboard userSettings 상태 업데이트 완료');
       }).catch(err => {
+        console.error('❌ Dashboard 사용자 설정 로드 실패:', err);
         addLog(`사용자 설정 로드 실패: ${err.message}`, 'error');
       });
+    } else {
+      console.log('❌ 이메일이 없어서 설정을 로드하지 않음');
     }
   }, []);
 
@@ -136,26 +292,168 @@ const Dashboard = () => {
     }));
   };
 
-  // 개별 매장 자동화 실행
-  const runSingleAutomation = async (store: any, setting: any) => {
+  // 개별 매장 자동화 실행 (시간 정보 포함)
+  const runSingleAutomation = async (store: any, setting: any, isAutoStart = false) => {
+    console.log(`🚀 runSingleAutomation 시작 - ${store.name}`);
+    console.log('📥 전달받은 store:', store);
+    console.log('📥 전달받은 setting:', setting);
+    console.log('📥 isAutoStart:', isAutoStart);
+    
     const carrier = localStorage.getItem('carrier') || 'SKT';
+    console.log('📱 사용할 통신사:', carrier);
+    
+    // 클라이언트 현재 시간을 ISO 8601 형식으로 가져오기
+    const clientTime = new Date().toISOString();
+    console.log('📅 클라이언트 현재 시간:', clientTime);
+    
+    // 설정된 시작 시간 가져오기
+    let startTimeStr = null;
+    
+    // 디버깅: setting 객체의 모든 속성 확인
+    console.log('🔍 setting 객체 전체:', JSON.stringify(setting, null, 2));
+    
+    // startTime 필드 확인 (서버에서 주는 실제 필드명)
+    if (setting?.startTime) {
+      console.log('✅ startTime 필드 발견:', setting.startTime);
+      console.log('typeof startTime:', typeof setting.startTime);
+      let startTime: Date;
+      
+      if (typeof setting.startTime === 'string') {
+        console.log('📅 startTime 문자열 형식 감지');
+        
+        // DB 형식 1순위: "YYYY-MM-DD HH:mm" (초 없음, 공백 구분)
+        if (setting.startTime.includes(' ') && setting.startTime.length === 16) {
+          // "2025-05-31 14:37" 형식
+          console.log('📅 DB 형식 감지 (분까지): YYYY-MM-DD HH:mm');
+          startTime = new Date(setting.startTime + ':00'); // 초 추가해서 파싱
+        }
+        // DB 형식 2순위: "YYYY-MM-DD HH:mm:ss" (초 포함, 공백 구분)
+        else if (setting.startTime.includes(' ') && setting.startTime.length === 19) {
+          // "2025-05-31 14:37:00" 형식
+          console.log('📅 DB 형식 감지 (초까지): YYYY-MM-DD HH:mm:ss');
+          startTime = new Date(setting.startTime);
+        }
+        // ISO 형식: "YYYY-MM-DDTHH:mm:ss" (T 구분)
+        else if (setting.startTime.includes('T')) {
+          console.log('📅 ISO 형식 감지: YYYY-MM-DDTHH:mm:ss');
+          startTime = new Date(setting.startTime);
+        } else {
+          // 기타 형식
+          console.log('📅 기타 문자열 형식, 직접 변환 시도');
+          startTime = new Date(setting.startTime);
+        }
+      } else if (setting.startTime instanceof Date) {
+        console.log('📅 startTime Date 객체 감지');
+        startTime = setting.startTime;
+      } else {
+        console.log('📅 startTime 기타 형식, 변환 시도');
+        startTime = new Date(setting.startTime);
+      }
+      
+      console.log('변환된 startTime:', startTime);
+      console.log('startTime.getTime():', startTime.getTime());
+      console.log('isNaN(startTime.getTime()):', isNaN(startTime.getTime()));
+      
+      if (!isNaN(startTime.getTime())) {
+        startTimeStr = startTime.toISOString().slice(0, 19); // YYYY-MM-DDTHH:mm:ss 형식
+        console.log('✅ 최종 startTimeStr:', startTimeStr);
+      } else {
+        console.log('❌ startTime 변환 실패 - NaN');
+        console.log('원본 startTime 값:', setting.startTime);
+      }
+    }
+    
+    // 호환성을 위해 startDateTime도 확인 (기존 코드 호환)
+    else if (setting?.startDateTime) {
+      console.log('✅ startDateTime 필드 발견 (호환성):', setting.startDateTime);
+      let startTime: Date;
+      
+      if (setting.startDateTime._d) {
+        console.log('📅 dayjs 객체 감지 (_d 속성)');
+        startTime = new Date(setting.startDateTime._d);
+      } else if (typeof setting.startDateTime === 'string') {
+        console.log('📅 startDateTime 문자열 형식 감지');
+        startTime = new Date(setting.startDateTime);
+      } else if (setting.startDateTime instanceof Date) {
+        console.log('📅 startDateTime Date 객체 감지');
+        startTime = setting.startDateTime;
+      } else {
+        console.log('📅 startDateTime 기타 형식, toDate() 시도');
+        startTime = setting.startDateTime.toDate ? setting.startDateTime.toDate() : new Date(setting.startDateTime);
+      }
+      
+      console.log('변환된 startTime (startDateTime):', startTime);
+      console.log('startTime.getTime():', startTime.getTime());
+      console.log('isNaN(startTime.getTime()):', isNaN(startTime.getTime()));
+      
+      if (!isNaN(startTime.getTime())) {
+        startTimeStr = startTime.toISOString().slice(0, 19); // YYYY-MM-DDTHH:mm:ss 형식
+        console.log('✅ 최종 startTimeStr (startDateTime):', startTimeStr);
+      } else {
+        console.log('❌ startDateTime 변환 실패 - NaN');
+      }
+    } else {
+      console.log('❌ startTime 및 startDateTime 필드 모두 없음');
+      console.log('userSettings[store.id]:', userSettings[store.id]);
+    }
+    
+    // 수동 실행 시 시간 확인 및 경고
+    if (!isAutoStart && startTimeStr) {
+      const now = new Date();
+      const startTime = new Date(startTimeStr);
+      const timeDiff = startTime.getTime() - now.getTime();
+      const nowStr = now.toLocaleString('ko-KR', { hour12: false });
+      const startTimeStr_display = startTime.toLocaleString('ko-KR', { hour12: false });
+      
+      if (timeDiff > 60000) { // 1분 이상 남은 경우
+        const remainingMinutes = Math.floor(timeDiff / 60000);
+        const remainingHours = Math.floor(remainingMinutes / 60);
+        
+        const confirmMessage = 
+          `⚠️ 수동 실행 확인\n\n` +
+          `${store.name}\n` +
+          `설정된 자동 시작 시간: ${startTimeStr_display}\n` +
+          `현재 시간: ${nowStr}\n\n` +
+          `아직 ${remainingHours > 0 ? `${remainingHours}시간 ` : ''}${remainingMinutes % 60}분 남았습니다.\n\n` +
+          `브라우저를 열고 "동의합니다" 버튼 전까지 진행합니다.\n` +
+          `"동의합니다" 버튼은 설정된 시간에 자동으로 클릭됩니다.\n\n` +
+          `지금 바로 실행하시겠습니까?`;
+        
+        const confirmed = window.confirm(confirmMessage);
+        
+        if (!confirmed) {
+          console.log(`${store.name}: 사용자가 수동 실행을 취소했습니다.`);
+          return;
+        }
+        
+        addLog(`${store.name} 수동 실행 (설정 시간보다 ${remainingMinutes}분 일찍, ${startTimeStr_display}에 동의 버튼 클릭 예정)`, 'info');
+      } else {
+        addLog(`${store.name} 수동 실행 (시간 도달, 즉시 동의 버튼 클릭)`, 'info');
+      }
+    } else if (isAutoStart) {
+      addLog(`${store.name} 자동 실행 (설정 시간 도달)`, 'success');
+    } else {
+      console.log(`${store.name}: 시작 시간이 설정되지 않음 - 즉시 실행`);
+      addLog(`${store.name} 수동 실행 (시작 시간 미설정, 즉시 실행)`, 'info');
+    }
     
     const storeConfig = {
       storeName: store.name,
       authUrl: store.authUrl,
       reserveUrl: store.reserveUrl,
-      startTime: setting?.startTime || '10:00',
+      startTime: startTimeStr, // 설정된 시작 시간 전달
       visitDate: setting?.visitDate || '2025-05-29',
       visitTime: setting?.visitTime || '14:00',
       carrier: carrier,
-      email: email
+      email: email,
+      clientTime: clientTime // 클라이언트 현재 시간 전달
     };
     
     try {
       updateStoreStatus(store.id, '실행중');
-      addLog(`${store.name} 자동화 실행 시작`, 'info');
-      
-      console.log('🚀 개별 자동화 시작 요청:', storeConfig);
+      console.log(`🚀 ${isAutoStart ? '자동' : '수동'} 자동화 시작 요청:`, storeConfig);
+      console.log(`📱 클라이언트 시간: ${clientTime}`);
+      console.log(`⏰ 설정 시간: ${startTimeStr || '설정 없음'}`);
 
       const result = await invoke('run_single_automation', {
         storeConfig: storeConfig
@@ -163,7 +461,7 @@ const Dashboard = () => {
 
       console.log('✅ 개별 자동화 실행 성공:', result);
       updateStoreStatus(store.id, '진행중');
-      addLog(`${store.name} 브라우저 실행 완료`, 'success');
+      addLog(`${store.name} 브라우저 실행 완료 (동의 버튼은 ${startTimeStr ? new Date(startTimeStr).toLocaleString('ko-KR', { hour12: false }) : '즉시'} 클릭 예정)`, 'success');
       
       return result;
       
@@ -175,15 +473,29 @@ const Dashboard = () => {
     }
   };
 
-  // 다중 자동화 실행
+  // 다중 자동화 실행 (수동 일괄 실행)
   const runMultipleAutomation = async () => {
     if (selectedStoreIds.length === 0) {
       showWarning('⚠️ 실행할 매장을 선택하세요.');
       return;
     }
 
+    // 일괄 수동 실행 확인
+    const confirmMessage = 
+      `🚀 일괄 수동 실행 확인\n\n` +
+      `선택된 ${selectedStoreIds.length}개 매장을 지금 바로 실행하시겠습니까?\n\n` +
+      `• 설정된 자동 시작 시간과 관계없이 즉시 실행됩니다\n` +
+      `• 모든 매장의 브라우저가 동시에 열립니다`;
+    
+    const confirmed = window.confirm(confirmMessage);
+
+    if (!confirmed) {
+      console.log('사용자가 일괄 실행을 취소했습니다.');
+      return;
+    }
+
     setIsExecuting(true);
-    addLog(`${selectedStoreIds.length}개 매장 일괄 자동화 시작`, 'info');
+    addLog(`${selectedStoreIds.length}개 매장 일괄 수동 실행 시작`, 'info');
     
     selectedStoreIds.forEach(storeId => {
       updateStoreStatus(storeId, '실행중');
@@ -199,16 +511,17 @@ const Dashboard = () => {
         storeName: store.name,
         authUrl: store.authUrl,
         reserveUrl: store.reserveUrl,
-        startTime: setting?.startTime || '10:00',
+        startTime: null, // 즉시 시작하도록 null로 설정
         visitDate: setting?.visitDate || '2025-05-29',
         visitTime: setting?.visitTime || '14:00',
         carrier: carrier,
-        email: email
+        email: email,
+        clientTime: null // 시간 비교 제거
       };
     });
 
     try {
-      console.log('🚀 다중 자동화 시작 요청 (병렬 실행):', storeConfigs);
+      console.log('🚀 다중 수동 실행 요청 (병렬 실행, 즉시 시작):', storeConfigs);
 
       const results = await invoke('run_multiple_automation', {
         storeConfigs: storeConfigs
@@ -231,8 +544,8 @@ const Dashboard = () => {
       // @ts-ignore
       const failCount = results.length - successCount;
       
-      addLog(`일괄 자동화 완료 - 성공: ${successCount}개, 실패: ${failCount}개`, 'success');
-      showSuccess(`🚀 자동화 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n모든 매장의 브라우저가 동시에 열렸습니다!`);
+      addLog(`일괄 수동 실행 완료 - 성공: ${successCount}개, 실패: ${failCount}개`, 'success');
+      showSuccess(`🚀 일괄 수동 실행 완료!\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개\n\n모든 매장의 브라우저가 동시에 열렸습니다!`);
       
     } catch (error) {
       console.error('❌ 다중 자동화 실행 실패:', error);
@@ -241,7 +554,7 @@ const Dashboard = () => {
         updateStoreStatus(storeId, '실패');
       });
 
-      addLog(`일괄 자동화 실행 실패: ${error}`, 'error');
+      addLog(`일괄 수동 실행 실패: ${error}`, 'error');
       showError(`❌ 다중 자동화 실행 실패:\n${error}`);
     } finally {
       setIsExecuting(false);
@@ -461,7 +774,7 @@ const Dashboard = () => {
                     }
                   }}
                 >
-                  {isExecuting ? '실행 중...' : `일괄 시작 (${selectedStoreIds.length})`}
+                  {isExecuting ? '실행 중...' : `일괄 수동 시작 (${selectedStoreIds.length})`}
                 </Button>
               </Stack>
             </Grid>
@@ -581,6 +894,167 @@ const Dashboard = () => {
                         </Box>
                       </Stack>
 
+                      {/* 시간 정보 표시 추가 */}
+                      {(userSettings[store.id]?.startTime || userSettings[store.id]?.startDateTime) && (
+                        <Box 
+                          sx={{ 
+                            p: 2, 
+                            mb: 2,
+                            borderRadius: 2, 
+                            background: 'rgba(201, 176, 55, 0.1)',
+                            border: '1px solid rgba(201, 176, 55, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexDirection: 'column',
+                            gap: 1
+                          }}
+                        >
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <AccessTimeIcon sx={{ fontSize: 16, color: '#c9b037' }} />
+                            <Typography variant="caption" color="#c9b037" fontWeight={600}>
+                              자동 시작 시간
+                            </Typography>
+                          </Stack>
+                          <Typography variant="body2" color="#f1f5f9" fontWeight={600} textAlign="center">
+                            {(() => {
+                              let startTime: Date;
+                              
+                              // startTime을 Date 객체로 변환 (우선순위: startTime > startDateTime)
+                              if (userSettings[store.id].startTime) {
+                                if (typeof userSettings[store.id].startTime === 'string') {
+                                  // DB 형식 1순위: "YYYY-MM-DD HH:mm" (초 없음, 공백 구분)
+                                  if (userSettings[store.id].startTime.includes(' ') && userSettings[store.id].startTime.length === 16) {
+                                    // "2025-05-31 14:37" 형식
+                                    startTime = new Date(userSettings[store.id].startTime + ':00'); // 초 추가해서 파싱
+                                  }
+                                  // DB 형식 2순위: "YYYY-MM-DD HH:mm:ss" (초 포함, 공백 구분)
+                                  else if (userSettings[store.id].startTime.includes(' ') && userSettings[store.id].startTime.length === 19) {
+                                    // "2025-05-31 14:37:00" 형식
+                                    startTime = new Date(userSettings[store.id].startTime);
+                                  }
+                                  // ISO 형식: "YYYY-MM-DDTHH:mm:ss" (T 구분)
+                                  else if (userSettings[store.id].startTime.includes('T')) {
+                                    startTime = new Date(userSettings[store.id].startTime);
+                                  } else {
+                                    // 기타 형식
+                                    startTime = new Date(userSettings[store.id].startTime);
+                                  }
+                                } else if (userSettings[store.id].startTime instanceof Date) {
+                                  startTime = userSettings[store.id].startTime;
+                                } else {
+                                  startTime = new Date(userSettings[store.id].startTime);
+                                }
+                              } else if (userSettings[store.id].startDateTime) {
+                                if (userSettings[store.id].startDateTime._d) {
+                                  startTime = new Date(userSettings[store.id].startDateTime._d);
+                                } else if (typeof userSettings[store.id].startDateTime === 'string') {
+                                  startTime = new Date(userSettings[store.id].startDateTime);
+                                } else if (userSettings[store.id].startDateTime instanceof Date) {
+                                  startTime = userSettings[store.id].startDateTime;
+                                } else {
+                                  startTime = userSettings[store.id].startDateTime.toDate ? 
+                                    userSettings[store.id].startDateTime.toDate() : 
+                                    new Date(userSettings[store.id].startDateTime);
+                                }
+                              }
+                              
+                              if (isNaN(startTime.getTime())) {
+                                return '시간 형식 오류';
+                              }
+                              
+                              return startTime.toLocaleString('ko-KR', {
+                                month: '2-digit',
+                                day: '2-digit', 
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                              });
+                            })()}
+                          </Typography>
+                          {/* 남은 시간 표시 */}
+                          {(() => {
+                            const now = new Date();
+                            let startTime: Date;
+                            
+                            // startTime을 Date 객체로 변환 (우선순위: startTime > startDateTime)
+                            if (userSettings[store.id].startTime) {
+                              if (typeof userSettings[store.id].startTime === 'string') {
+                                // DB 형식 1순위: "YYYY-MM-DD HH:mm" (초 없음, 공백 구분)
+                                if (userSettings[store.id].startTime.includes(' ') && userSettings[store.id].startTime.length === 16) {
+                                  // "2025-05-31 14:37" 형식
+                                  startTime = new Date(userSettings[store.id].startTime + ':00'); // 초 추가해서 파싱
+                                }
+                                // DB 형식 2순위: "YYYY-MM-DD HH:mm:ss" (초 포함, 공백 구분)
+                                else if (userSettings[store.id].startTime.includes(' ') && userSettings[store.id].startTime.length === 19) {
+                                  // "2025-05-31 14:37:00" 형식
+                                  startTime = new Date(userSettings[store.id].startTime);
+                                }
+                                // ISO 형식: "YYYY-MM-DDTHH:mm:ss" (T 구분)
+                                else if (userSettings[store.id].startTime.includes('T')) {
+                                  startTime = new Date(userSettings[store.id].startTime);
+                                } else {
+                                  // 기타 형식
+                                  startTime = new Date(userSettings[store.id].startTime);
+                                }
+                              } else if (userSettings[store.id].startTime instanceof Date) {
+                                startTime = userSettings[store.id].startTime;
+                              } else {
+                                startTime = new Date(userSettings[store.id].startTime);
+                              }
+                            } else if (userSettings[store.id].startDateTime) {
+                              if (userSettings[store.id].startDateTime._d) {
+                                startTime = new Date(userSettings[store.id].startDateTime._d);
+                              } else if (typeof userSettings[store.id].startDateTime === 'string') {
+                                startTime = new Date(userSettings[store.id].startDateTime);
+                              } else if (userSettings[store.id].startDateTime instanceof Date) {
+                                startTime = userSettings[store.id].startDateTime;
+                              } else {
+                                startTime = userSettings[store.id].startDateTime.toDate ? 
+                                  userSettings[store.id].startDateTime.toDate() : 
+                                  new Date(userSettings[store.id].startDateTime);
+                              }
+                            }
+                            
+                            if (isNaN(startTime.getTime())) {
+                              return (
+                                <Typography variant="caption" color="#ef4444" textAlign="center">
+                                  시간 형식 오류
+                                </Typography>
+                              );
+                            }
+                            
+                            const remainingMs = startTime.getTime() - now.getTime();
+                            
+                            if (remainingMs > 0) {
+                              const totalSeconds = Math.floor(remainingMs / 1000);
+                              const hours = Math.floor(totalSeconds / 3600);
+                              const minutes = Math.floor((totalSeconds % 3600) / 60);
+                              const seconds = totalSeconds % 60;
+                              
+                              let timeStr = '';
+                              if (hours > 0) timeStr += `${hours}시간 `;
+                              if (minutes > 0) timeStr += `${minutes}분 `;
+                              timeStr += `${seconds}초 남음`;
+                              
+                              return (
+                                <Typography variant="caption" color="#94a3b8" textAlign="center">
+                                  {timeStr}
+                                </Typography>
+                              );
+                            } else if (currentStatus === '대기중') {
+                              return (
+                                <Typography variant="caption" color="#10b981" textAlign="center" fontWeight={600}>
+                                  ⚡ 자동 시작 준비됨
+                                </Typography>
+                              );
+                            } else {
+                              return null;
+                            }
+                          })()}
+                        </Box>
+                      )}
+
                       {/* 상태 표시 개선 */}
                       <Box 
                         sx={{ 
@@ -617,7 +1091,25 @@ const Dashboard = () => {
                           size="small" 
                           startIcon={<PlayArrowIcon />}
                           disabled={isStoreExecuting}
-                          onClick={() => runSingleAutomation(store, userSettings[store.id])}
+                          onClick={() => {
+                            console.log(`🎯 ${store.name} 시작 버튼 클릭`);
+                            console.log('🗂️ 전체 userSettings:', userSettings);
+                            console.log(`🏪 ${store.name}의 userSettings[${store.id}]:`, userSettings[store.id]);
+                            
+                            const currentSetting = userSettings[store.id];
+                            if (currentSetting) {
+                              console.log('✅ 설정 존재함:', {
+                                startTime: currentSetting.startTime,
+                                startDateTime: currentSetting.startDateTime,
+                                visitDate: currentSetting.visitDate,
+                                visitTime: currentSetting.visitTime
+                              });
+                            } else {
+                              console.log('❌ 설정이 존재하지 않음');
+                            }
+                            
+                            runSingleAutomation(store, userSettings[store.id], false);
+                          }} // 수동 실행 표시
                           sx={{ 
                             flex: 1, 
                             fontSize: '0.8rem', 
